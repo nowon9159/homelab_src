@@ -5,12 +5,15 @@ apt update
 apt install -y net-tools 
 
 # install minikube
-curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 > /root
+sudo curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 > /root/minikube-linux-amd64
 
 sudo install /root/minikube-linux-amd64 /usr/local/bin/minikube
 
 # alias
-echo 'alias k=kubectl' >> ~/.bashrc
-source ~/.bashrc
+sudo echo 'alias k=kubectl' >> /etc/profile 
+sudo echo 'alias mi=minikube' >> /etc/profile
 
-
+# user and group create (because of Privileged error)
+adduser developer
+usermod -aG sudo developer
+su - developer
