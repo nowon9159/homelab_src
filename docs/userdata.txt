@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# apt update && install package
+apt update
+apt install -y net-tools 
+
+# install minikube
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 > /root
+
+sudo install /root/minikube-linux-amd64 /usr/local/bin/minikube
+
+# alias
+echo 'alias k=kubectl' >> ~/.bashrc
+source ~/.bashrc
+
+
