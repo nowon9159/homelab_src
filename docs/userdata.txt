@@ -9,6 +9,11 @@ sudo curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-l
 
 sudo install /root/minikube-linux-amd64 /usr/local/bin/minikube
 
+# install helm
+sudo curl -fsSL -o /root/get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 
+sudo chmod 700 /root/get_helm.sh
+sudo /root/get_helm.sh
+
 # alias
 sudo echo 'alias k=kubectl' >> /etc/profile 
 sudo echo 'alias mi=minikube' >> /etc/profile
