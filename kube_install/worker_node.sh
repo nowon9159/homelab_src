@@ -42,7 +42,7 @@ sudo apt-get install -y kubelet=1.25.13-1.1 kubeadm=1.25.13-1.1 kubectl=1.25.13-
 
 sudo apt-mark hold kubelet kubeadm kubectl
 
-#kubeadm join 192.23.108.8:6443 --token thubfg.2zq20f5ttooz27op --discovery-token-ca-cert-hash sha256:e7755ede5d6f0bae08bca4e13ccce8923995245ca68bba5f7ccc53c9b9728cdb
+kubeadm join {IP:6443} --token {token} --discovery-token-ca-cert-hash {hash}
 
 kubeadm token list # $Token
 openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //' # $Hash

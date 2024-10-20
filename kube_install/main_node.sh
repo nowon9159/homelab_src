@@ -79,8 +79,7 @@ sudo apt-mark hold kubelet kubeadm kubectl
 
 ## Init kubeadm
 
-kubeadm init --apiserver-cert-extra-sans=controlplane --apiserver-advertise-address `hostname -I` --pod-network-cidr=10.244.0.0/16 | tee /root/kubeadm_init_output.txt
-#sudo kubeadm init --pod-network-cidr=10.244.0.0/16
+sudo kubeadm init --apiserver-cert-extra-sans=controlplane --apiserver-advertise-address `hostname -I` --pod-network-cidr=10.244.0.0/16 | sudo tee /root/kubeadm_init_output.txt
 
 sudo mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
