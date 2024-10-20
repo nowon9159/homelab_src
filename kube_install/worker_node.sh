@@ -38,7 +38,7 @@ sudo apt-get update
 
 sudo apt-cache madison kubeadm
 
-sudo apt-get install -y kubelet=1.25.0 kubeadm=1.25.0 kubectl=1.25.0
+sudo apt-get install -y kubelet=1.25.13-1.1 kubeadm=1.25.13-1.1 kubectl=1.25.13-1.1
 
 sudo apt-mark hold kubelet kubeadm kubectl
 
