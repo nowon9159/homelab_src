@@ -18,6 +18,11 @@ sudo sysctl --system
 systemctl stop firewalld
 systemctl disable firewalld
 
+## Off swap
+sudo swapoff -a
+sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+
+
 ## apt update & install required
 sudo apt-get update
 sudo apt-get install -y apt-transport-https ca-certificates curl gnupg

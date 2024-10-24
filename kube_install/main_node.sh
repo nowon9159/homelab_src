@@ -40,7 +40,7 @@ net.bridge.bridge-nf-call-iptables = 1
 net.ipv4.ip_forward                = 1
 EOF
 
-sudo sysctl --system
+sudo sysctl --system | grep -E "net.bridge.bridge-nf-call-ip6tables|net.bridge.bridge-nf-call-iptables|net.ipv4.ip_forward"
 
 ## Diable firewalld
 systemctl stop firewalld
@@ -85,14 +85,16 @@ sudo mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 export KUBECONFIG=/etc/kubernetes/admin.conf
+export KUBECONFIG=/home/{User}/.kube/config
+
 
 ## Install Helm
 curl -O https://get.helm.sh/helm-v3.13.2-linux-amd64.tar.gz && tar -zxvf helm-v3.13.2-linux-amd64.tar.gz
 mv linux-amd64/helm /usr/local/bin/helm
 
 ## Apply flannel
-kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
 kubectl create ns kube-flannel
+kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
 kubectl label --overwrite ns kube-flannel pod-security.kubernetes.io/enforce=privileged
 
 helm repo add flannel https://flannel-io.github.io/flannel/
