@@ -22,6 +22,9 @@ systemctl disable firewalld
 sudo swapoff -a
 sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
 
+## Load necessary kernel modules
+sudo modprobe overlay
+sudo modprobe br_netfilter
 
 ## apt update & install required
 sudo apt-get update
