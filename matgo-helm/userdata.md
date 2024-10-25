@@ -17,7 +17,7 @@ speaker 563827 root    8u  IPv4 1803339      0t0  TCP matgo-k8s-worker:7946 (LIS
 speaker 563827 root    9u  IPv4 1803343      0t0  UDP matgo-k8s-worker:7946
 ```
 - 원인 상세 파악 필요할듯
-
+- 비슷한 문제를 해결한 [링크](https://github.com/metallb/metallb/issues/1539) 
 
 
 ## longhorn 설치
