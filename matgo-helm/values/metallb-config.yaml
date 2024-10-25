@@ -9,7 +9,7 @@ metadata:
 spec:
   addresses:
   # Using ip address pool
-  - 192.168.0.111-192.168.0.125
+  - 172.16.0.0-172.31.0.0
   autoAssign: true
 
 --- 
