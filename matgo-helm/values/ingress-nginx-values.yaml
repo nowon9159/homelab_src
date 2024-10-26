@@ -1,0 +1,2 @@
+tcp:
+  40022: "gitlab/mygitlab-gitlab-shell:22"

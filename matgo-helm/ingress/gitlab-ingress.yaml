@@ -1,0 +1,11 @@
+ingress:
+  enabled: true
+  hosts:
+    - name: gitlab.matgo.com
+      paths:
+        - /
+  tls:
+    - hosts:
+        - gitlab.matgo.com
+      secretName: gitlab-tls  
+
