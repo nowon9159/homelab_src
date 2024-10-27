@@ -1,6 +1,4 @@
 #!/bin/bash
-
-
 ## IPtables, sysctl
 cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
 br_netfilter
@@ -50,11 +48,10 @@ sudo apt-get install -y kubelet=1.25.13-1.1 kubeadm=1.25.13-1.1 kubectl=1.25.13-
 
 sudo apt-mark hold kubelet kubeadm kubectl
 
-kubeadm join {IP:6443} --token {token} --discovery-token-ca-cert-hash {hash}
+
+# kubeadm join
+sudo kubeadm join {IP:6443} --token {token} --discovery-token-ca-cert-hash {hash}
 
 kubeadm token list # $Token
 openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //' # $Hash
 kubectl get nodes -o wide # nodeIP
-
-sudo kubeadm join {nodeIP:6443} --token {Token} --discovery-token-ca-cert-hash sha256:{Hash}
-

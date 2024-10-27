@@ -7,5 +7,4 @@ ingress:
   tls:
     - hosts:
         - gitlab.matgo.com
-      secretName: gitlab-tls  
-
+      secretName: gitlab-tls
