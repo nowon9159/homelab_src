@@ -25,3 +25,13 @@ print(all_metadata[0])
 #         },
 #     ]
 #     )
+
+# Select
+
+# db_matgo.metadata.find(
+#     {
+#         "name": "bobby",
+#         "age": 21
+#     }
+# )
+
