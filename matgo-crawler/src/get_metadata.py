@@ -1,40 +1,59 @@
+# 로직 정리
+# 1. 드라이버 설정
+# 2. 키워드 기반 네이버 map URL 접속
+# 3. 현재 페이지에 있는 모든 가게 데이터에 대한 상세 정보 가져오기
+#     3.1 가게 클릭
+#     3.2 가게 정보 메타데이터에 리스트에 담기 
+#         3.2.1 가져와야하는 메타데이터 {
+#             "store_id": ,
+#             "store_name": ,
+#             "location": ,
+#             "open_info": ,
+#             "review_count": ,
+#             "store_id": ,
+#             "store_id": ,
+#         }
+# 4. 현재 페이지 모두 수행했다면 다음 페이지도 수행 (리스트 길이 100 일때 중지)
+# 5. 메타데이터 리스트 안의 오브젝트 MongoDB에 하나하나 담기
+# f-1. filter 적용하려면 이와 같은 url 사용 "https://pcmap.place.naver.com/restaurant/list?query=%EB%8F%88%EC%B9%B4%EC%B8%A0&x=127.161762930&y=35.849829071&entry=bmp&rank={"요즘뜨는"}&hours={"24시간%20영업"}"
+# f-2. 
+
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options
+import time
+from bs4 import BeautifulSoup
 
 from selenium.webdriver.support.ui import WebDriverWait
 # expected_conditions (EC): Selenium에서 제공하는 여러 가지 조건을 정의한 모듈
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver import ActionChains
 
-from bs4 import BeautifulSoup
-import sys
-import time
+from urllib.parse import urlparse, urlunparse # url query 정리
+import json
 
-# 상수 (전주역 테스트용 좌표)
-KEYWORD = "돈카츠"
-# URL = f"https://map.naver.com/restaurant/list?query={KEYWORD}&x=126.97828200000112&y=37.56846119999963&clientX=126.97825&clientY=37.566551"
-COORD_X = "127.161762930"
-COORD_Y = "35.849829071"
-URL = f"https://pcmap.place.naver.com/restaurant/list?query={KEYWORD}&x={COORD_X}&y={COORD_Y}"
-WAIT_TIMEOUT = 10 ## 대기 시간(초)
-# 파라미터로 데이터 입력 받기
-# index 0: file path
-# KEYWORD = sys.argv[1:]
-# COORD_X = sys.argc[2:]
-# COORD_Y = sys.argc[3:]
-# 옵션 설정
-options = Options()
-options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3') # 차단 방지 user-agent 설정
-options.add_argument("--start-maximized") # 화면 크게
-options.add_experimental_option("detach", True) # 자동종료 방지
+# ENV
 
-# run webdriver
+KEYWORD = "한식"
+SEARCH_URL = f"https://pcmap.place.naver.com/restaurant/list?query={KEYWORD}"
+IMAGE_LIST = []
+
+
+# Driver
+options = webdriver.ChromeOptions()
+options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3')   # 차단 방지 user-agent 설정
+options.add_argument("--start-maximized")   # 화면 크게
+options.add_argument("disable-gpu")
+
+options.add_experimental_option("detach", True) # 자동종료 방지(드라이버 유지)
+
+
 driver = webdriver.Chrome(options=options)
-driver.get(url = URL)
+
+driver.get(url=SEARCH_URL)
 
 # 화면 스크롤
 def scroll_list() :
-    wait = WebDriverWait(driver, WAIT_TIMEOUT)
+    wait = WebDriverWait(driver, 10)
     wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="app-root"]/div')))
 
     scroll_container = driver.find_element(By.CSS_SELECTOR, ".Ryr1F")
@@ -53,7 +72,8 @@ def scroll_list() :
                 break
             last_height = new_height
 
-    parsing_page()
+def move_nextpage():
+     
 
 # bs4 parsing
 def parsing_page():
@@ -61,7 +81,8 @@ def parsing_page():
     results_html = driver.page_source
     # parsing to bs4
     soup = BeautifulSoup(results_html, 'html.parser')
-    crwl_data(soup)
+    
+    return soup
 
 
 def crwl_data(ele):
@@ -87,7 +108,14 @@ def crwl_data(ele):
             
             print(index, ".", restaurant_name.get_text(), "\n 영업여부 :", isOpen, "\n 별점 :", rating_value, "\n 리뷰 수 : "+reviews_value)
 
-# test
-scroll_list()
-# 드라이버 종료
-driver.quit()
+def crawling_start():
+    scroll_list()
+    
+    parsing_html = parsing_page()
+    
+    crwl_data(ele=parsing_html)
+
+    # 드라이버 종료
+    driver.quit()
+
+crawling_start()
