@@ -34,7 +34,8 @@ import json
 # ENV
 
 KEYWORD = "한식"
-SEARCH_URL = f"https://pcmap.place.naver.com/restaurant/list?query={KEYWORD}"
+#SEARCH_URL = f"https://pcmap.place.naver.com/restaurant/list?query={KEYWORD}"
+SEARCH_URL = f"https://map.naver.com/p/search/%EA%B9%80%EC%B9%98/place/31894752?c=15.00,0,0,0,dh&placePath=%2Fphoto%3Fentry%253Dbmp"
 IMAGE_LIST = []
 
 
@@ -73,12 +74,26 @@ def scroll_list() :
             last_height = new_height
 
 def move_nextpage():
-     
+    return "asd"
+
+def switch_left():
+    # Iframe 왼쪽 포커스
+    driver.switch_to.parent_frame()
+    iframe = driver.find_element(By.XPATH,'//*[@id="searchIframe"]')
+    driver.switch_to.frame(iframe)
+
+def switch_right():
+    # Iframe 오른쪽 포커스
+    driver.switch_to.parent_frame()
+    iframe = driver.find_element(By.XPATH,'//*[@id="entryIframe"]')
+    driver.switch_to.frame(iframe)
 
 # bs4 parsing
 def parsing_page():
+
     # 검색 결과 창을 html로 추출
     results_html = driver.page_source
+
     # parsing to bs4
     soup = BeautifulSoup(results_html, 'html.parser')
     
@@ -112,7 +127,7 @@ def crawling_start():
     scroll_list()
     
     parsing_html = parsing_page()
-    
+
     crwl_data(ele=parsing_html)
 
     # 드라이버 종료
