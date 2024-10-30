@@ -1,22 +1,13 @@
-# 로직 정리
-# 1. 드라이버 설정
-# 2. 키워드 기반 네이버 map URL 접속
-# 3. 현재 페이지에 있는 모든 가게 데이터에 대한 상세 정보 가져오기
-#     3.1 가게 클릭
-#     3.2 가게 정보 메타데이터에 리스트에 담기 
-#         3.2.1 가져와야하는 메타데이터 {
-#             "store_id": ,
-#             "store_name": ,
-#             "location": ,
-#             "open_info": ,
-#             "review_count": ,
-#             "store_id": ,
-#             "store_id": ,
-#         }
-# 4. 현재 페이지 모두 수행했다면 다음 페이지도 수행 (리스트 길이 100 일때 중지)
-# 5. 메타데이터 리스트 안의 오브젝트 MongoDB에 하나하나 담기
-# f-1. filter 적용하려면 이와 같은 url 사용 "https://pcmap.place.naver.com/restaurant/list?query=%EB%8F%88%EC%B9%B4%EC%B8%A0&x=127.161762930&y=35.849829071&entry=bmp&rank={"요즘뜨는"}&hours={"24시간%20영업"}"
-# f-2. 
+### 기존 place -> map에 iframe으로 붙은 형태
+### place 서치 시 pcmap으로 리다이렉트 되며 정보 조회됨
+### 검색명에 따라 좌측 iframe의 DOM 구조가 바뀜 (list page or detail page )
+
+### (!!!로직 개선 필요!!!) 
+#1 naver map에서 place iframe 타겟 후 서칭
+#2 리스트 형식으로 검색될 경우 식당 리스트 추출 
+#2-1 상세페이지로 바로 리다이렉트될 경우 상세 정보 크롤링
+#3 키워드 필터링 후 click을 통해 상세페이지 iframe으로 이동
+#4 상세 정보 크롤링
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -31,36 +22,25 @@ from selenium.webdriver import ActionChains
 from urllib.parse import urlparse, urlunparse # url query 정리
 import json
 
-# ENV
+# 상수
+WAIT_TIMEOUT = 10 ## 대기 시간(초)
+KEYWORD = "맥도날드 명동" ## 테스트코드 맥도날드 명동점
+URL = f"https://map.naver.com/restaurant/list?query={KEYWORD}" # https://pcmap.place.naver.com/place/list?query <-- 해당 url도 가능
 
-KEYWORD = "한식"
-#SEARCH_URL = f"https://pcmap.place.naver.com/restaurant/list?query={KEYWORD}"
-SEARCH_URL = f"https://map.naver.com/p/search/%EA%B9%80%EC%B9%98/place/31894752?c=15.00,0,0,0,dh&placePath=%2Fphoto%3Fentry%253Dbmp"
-IMAGE_LIST = []
-
-
-# Driver
+# 드라이버 실행 및 옵션 정의
 options = webdriver.ChromeOptions()
 options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3')   # 차단 방지 user-agent 설정
 options.add_argument("--start-maximized")   # 화면 크게
-options.add_argument("disable-gpu")
-
 options.add_experimental_option("detach", True) # 자동종료 방지(드라이버 유지)
-
-
 driver = webdriver.Chrome(options=options)
 
-driver.get(url=SEARCH_URL)
+driver.get(url=URL)
 
-# 화면 스크롤
-def scroll_list() :
-    wait = WebDriverWait(driver, 10)
-    wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="app-root"]/div')))
+# 페이지 스크롤
+def page_scroll(class_name):
+    scroll_container = driver.find_element(By.CSS_SELECTOR, f".{class_name}")
+    last_height = driver.execute_script("return arguments[0].scrollHeight", scroll_container) # execute_script = js 실행.
 
-    scroll_container = driver.find_element(By.CSS_SELECTOR, ".Ryr1F")
-    # execute_script = js 실행.
-    last_height = driver.execute_script("return arguments[0].scrollHeight", scroll_container)
-    # 스크롤
     while True:
             # 요소 내에서 아래로 3000px 스크롤
             driver.execute_script("arguments[0].scrollTop += 3000;", scroll_container)
@@ -73,64 +53,104 @@ def scroll_list() :
                 break
             last_height = new_height
 
-def move_nextpage():
-    return "asd"
-
-def switch_left():
-    # Iframe 왼쪽 포커스
+# iframe 엘리먼트 지정
+def focus_iframe(type):
     driver.switch_to.parent_frame()
-    iframe = driver.find_element(By.XPATH,'//*[@id="searchIframe"]')
+    if type == 'list':
+        iframe = driver.find_element(By.XPATH,'//*[@id="searchIframe"]')
+    elif type == 'detail':
+        wait = WebDriverWait(driver, WAIT_TIMEOUT)
+        wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="entryIframe"]')))
+        
+        iframe = driver.find_element(By.XPATH,'//*[@id="entryIframe"]')
     driver.switch_to.frame(iframe)
 
-def switch_right():
-    # Iframe 오른쪽 포커스
-    driver.switch_to.parent_frame()
-    iframe = driver.find_element(By.XPATH,'//*[@id="entryIframe"]')
-    driver.switch_to.frame(iframe)
+# 이미지
+img_list = []
+def select_tab_img():
+    tab_list = driver.find_elements(By.CSS_SELECTOR, '.veBoZ')
+    # 사진 탭 진입
+    for tab in tab_list:
+         if tab.text == '사진':
+              tab.click()
+              
+    wait = WebDriverWait(driver, WAIT_TIMEOUT)
+    wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'wzrbN')))
+    img_elems = driver.find_elements(By.CLASS_NAME, 'wzrbN')
+    for img in img_elems:
+        img_src = img.find_element(By.XPATH,'.//a/img').get_attribute('src')
+        img_list.append(img_src)
 
-# bs4 parsing
-def parsing_page():
-
-    # 검색 결과 창을 html로 추출
-    results_html = driver.page_source
-
-    # parsing to bs4
-    soup = BeautifulSoup(results_html, 'html.parser')
+# 상세 정보
+def detail_info():
+    focus_iframe('detail')
+    # 현재 URL 가져오기 (리스트와 같이 나옴) <-- 이해 필요
+    current_url = driver.current_url
+    parsed_url = urlparse(current_url)
+    # 쿼리 문자열 제거
+    cleaned_url = urlunparse((parsed_url.scheme, parsed_url.netloc, parsed_url.path, '', '', ''))
     
-    return soup
-
-
-def crwl_data(ele):
-    result_items = ele.find_all('li', class_='rTjJo')
-    for index, item in enumerate(result_items, start=1):
-            restaurant_name = item.find('span', class_="TYaxT") # 상호명
-            # 영업 여부
-            try :
-                isOpen = item.find('span', class_="MqNOY").get_text()
-            except :
-                isOpen = None
-            # 별점 
-            try :
-                rating_value = item.find('span', class_="orXYY").get_text().replace("별점","").strip()
-            except :
-                rating_value = None
-            # 리뷰
-            reviews_ele = item.find('div', class_="MVx6e")
-            for item in reviews_ele:
-                if len(item['class']) == 1: #fix 방문자 / 블로그 리뷰 분리 조건문 추가 필요
-                    print(item.get_text().replace("리뷰","").strip())
-                    reviews_value = item.get_text().replace("리뷰","").strip()
-            
-            print(index, ".", restaurant_name.get_text(), "\n 영업여부 :", isOpen, "\n 별점 :", rating_value, "\n 리뷰 수 : "+reviews_value)
-
-def crawling_start():
-    scroll_list()
+    # parsing to bs4 
+    result_page = driver.page_source
+    soup = BeautifulSoup(result_page, 'html.parser')
+    # wait = WebDriverWait(driver, WAIT_TIMEOUT)
+    # wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'PIbes'))) <- 안 잡힘
+    detail_ele = soup.find('div', class_='PIbes')   #fix redirect 시 사진 넘어가기 전 상세정보 필요
     
-    parsing_html = parsing_page()
+    detail_addr = detail_ele.find('div', class_='vV_z_').getText()  # 상세 주소
+    current_status = detail_ele.find('em').get_text()  # 영업 여부
+    time_ele = soup.find('time', {'aria-hidden': 'true'}).get_text()   # 영업 시간
+    strt_time = None
+    end_time = None
+    if current_status == '영업 중':
+        end_time = time_ele
+    elif current_status == '영업 종료':
+        strt_time = time_ele
+    # img url list
+    select_tab_img()
 
-    crwl_data(ele=parsing_html)
+    detail_info = {
+         'detail_addr' : detail_addr,
+         'current_status' : current_status,
+         'strt_time' : strt_time,
+         'end_time' : end_time,
+         'naver_url' : cleaned_url,
+         'img_url' : img_list
+    }
+    json_detail_info = json.dumps(detail_info, ensure_ascii=False)
+    print("dic", json_detail_info)
+    return json_detail_info
+    # print("상세주소 :"+detail_addr, "\n영업 여부:", current_status, "\n오픈 시간:",strt_time, "\n마감 시간:",end_time, "\n네이버 URL:", cleaned_url, "\n이미지 URL:", img_list)
 
-    # 드라이버 종료
-    driver.quit()
+### 크롤링 시작 함수
+def crwl_data():
+    wait = WebDriverWait(driver, WAIT_TIMEOUT)
+    wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="section_content"]/div')))
+    try:
+            driver.find_element(By.XPATH, '//*[@id="searchIframe"]')
+            focus_iframe('list')
+            page_scroll("Ryr1F")
+            # try:
+            # 키워드 포함 여부 체크 
+            search_restaurant = driver.find_element(By.XPATH, f'//*[contains(text(),"{KEYWORD}")]')
+            select_restaurant = search_restaurant.find_element(By.XPATH, '../../../div/div/span')
+            # 스크롤 이동
+            # actions.move_to_element(select_restaurant).perform()
+            # 클릭 가능할 때까지 대기
+            # wait.until(EC.visibility_of_element_located(select_restaurant))
+            # WebDriverWait(driver, 10).until(
+            #     lambda d: d.execute_script('return document.readyState') == 'complete'
+            # )
+            time.sleep(2) #fix 뒤의 지도가 로딩되어야 클릭이벤트가 작동하는 것으로 파악됨. 지도렌더링 기다릴 방법 찾을 것
+            actions = ActionChains(driver)
+            actions.click(select_restaurant).perform()
+            # select_restaurant.click()
+    except:
+        print("FAIL TO SEARCH LIST")
+    ## 최종 정보 크롤링
+    detail_info()
 
-crawling_start()
+# test
+crwl_data()
+# 드라이버 종료
+driver.quit()
