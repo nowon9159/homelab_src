@@ -13,19 +13,23 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 import time
 from bs4 import BeautifulSoup
-
 from selenium.webdriver.support.ui import WebDriverWait
-# expected_conditions (EC): Selenium에서 제공하는 여러 가지 조건을 정의한 모듈
-from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support import expected_conditions as EC # expected_conditions (EC): Selenium에서 제공하는 여러 가지 조건을 정의한 모듈
 from selenium.webdriver import ActionChains
 
 from urllib.parse import urlparse, urlunparse # url query 정리
+import re
 import json
+from pymongo import MongoClient
+from bson import json_util
+
 
 # 상수
-WAIT_TIMEOUT = 10 ## 대기 시간(초)
+WAIT_TIMEOUT = 15 ## 대기 시간(초)
 KEYWORD = "맥도날드 명동" ## 테스트코드 맥도날드 명동점
 URL = f"https://map.naver.com/restaurant/list?query={KEYWORD}" # https://pcmap.place.naver.com/place/list?query <-- 해당 url도 가능
+mongo_ip = "127.0.0.1"
+mongo_port = 41411
 
 # 드라이버 실행 및 옵션 정의
 options = webdriver.ChromeOptions()
@@ -34,7 +38,10 @@ options.add_argument("--start-maximized")   # 화면 크게
 options.add_experimental_option("detach", True) # 자동종료 방지(드라이버 유지)
 driver = webdriver.Chrome(options=options)
 
-driver.get(url=URL)
+# pymongo client 생성
+client = MongoClient(mongo_ip, mongo_port) # minikube service mongodb --url
+
+
 
 # 페이지 스크롤
 def page_scroll(class_name):
@@ -90,6 +97,11 @@ def detail_info():
     # 쿼리 문자열 제거
     cleaned_url = urlunparse((parsed_url.scheme, parsed_url.netloc, parsed_url.path, '', '', ''))
     
+    # store_id 추출
+    url_path = urlparse(cleaned_url).path
+    url_path_match = re.search(r'place/(\d+)', url_path)
+    store_id = url_path_match.group(1)
+
     # parsing to bs4 
     result_page = driver.page_source
     soup = BeautifulSoup(result_page, 'html.parser')
@@ -111,19 +123,22 @@ def detail_info():
 
     detail_info = {
          'detail_addr' : detail_addr,
+         'store_id' : store_id,
          'current_status' : current_status,
          'strt_time' : strt_time,
          'end_time' : end_time,
          'naver_url' : cleaned_url,
-         'img_url' : img_list
+         'img_url' : img_list,
+         'img_thumbs_url' : img_list[0] # 임시 방편
     }
     json_detail_info = json.dumps(detail_info, ensure_ascii=False)
     print("dic", json_detail_info)
     return json_detail_info
-    # print("상세주소 :"+detail_addr, "\n영업 여부:", current_status, "\n오픈 시간:",strt_time, "\n마감 시간:",end_time, "\n네이버 URL:", cleaned_url, "\n이미지 URL:", img_list)
 
 ### 크롤링 시작 함수
 def crwl_data():
+    driver.get(url=URL)
+
     wait = WebDriverWait(driver, WAIT_TIMEOUT)
     wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="section_content"]/div')))
     try:
@@ -141,14 +156,26 @@ def crwl_data():
             # WebDriverWait(driver, 10).until(
             #     lambda d: d.execute_script('return document.readyState') == 'complete'
             # )
-            time.sleep(2) #fix 뒤의 지도가 로딩되어야 클릭이벤트가 작동하는 것으로 파악됨. 지도렌더링 기다릴 방법 찾을 것
+
+            # 맵에 마커 생길때까지 대기 후 작업
+            driver.switch_to.parent_frame()
+            wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ".SEARCH_MARKER > div")))
+            focus_iframe('list')
+
             actions = ActionChains(driver)
             actions.click(select_restaurant).perform()
-            # select_restaurant.click()
     except:
         print("FAIL TO SEARCH LIST")
-    ## 최종 정보 크롤링
-    detail_info()
+    
+    # json data DB에 전송
+    json_data = detail_info()
+    db_matgo = client.matgo
+
+
+
+    db_matgo.metadata.insert_one(json_data)
+    all_metadata = list(db_matgo.metadata.find({}))
+    print(all_metadata)
 
 # test
 crwl_data()
