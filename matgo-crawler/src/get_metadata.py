@@ -2,12 +2,9 @@
 ### place 서치 시 pcmap으로 리다이렉트 되며 정보 조회됨
 ### 검색명에 따라 좌측 iframe의 DOM 구조가 바뀜 (list page or detail page )
 
-### (!!!로직 개선 필요!!!) 
-#1 naver map에서 place iframe 타겟 후 서칭
-#2 리스트 형식으로 검색될 경우 식당 리스트 추출 
-#2-1 상세페이지로 바로 리다이렉트될 경우 상세 정보 크롤링
-#3 키워드 필터링 후 click을 통해 상세페이지 iframe으로 이동
-#4 상세 정보 크롤링
+# 기대 json data에 따른 로직 변경 필요
+## 1. 현재는 json data를 한개만 담아서 전역변수인 img_list에 복수의 값을 담는데, 이미지 url 하나 당 ObjectId 하나가 되어야 함
+## 1.1 1번을 만족하려면 현재 select_tab_img() 로직을 조금 수정해서 current_img 전역 변수에 하나씩 담고 하나씩 변경하는 식으로 오브젝트 여러개를 만들어 pymongo의 insert_many()를 이용해 리스트 안에 있는 여러 개의 object를 insert 해야할 듯
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -168,13 +165,13 @@ def crwl_data():
     
     # json data DB에 전송
     json_data = detail_info()
-    db_matgo = client.matgo
+    # db_matgo = client.matgo
 
 
 
-    db_matgo.metadata.insert_many(json_data)
-    all_metadata = list(db_matgo.metadata.find({}))
-    print(all_metadata)
+    # db_matgo.metadata.insert_many(json_data)
+    # all_metadata = list(db_matgo.metadata.find({}))
+    # print(all_metadata)
 
 # test
 crwl_data()
