@@ -29,19 +29,18 @@ WAIT_TIMEOUT = 15 ## 대기 시간(초)
 KEYWORD = "맥도날드 명동" ## 테스트코드 맥도날드 명동점
 URL = f"https://map.naver.com/restaurant/list?query={KEYWORD}" # https://pcmap.place.naver.com/place/list?query <-- 해당 url도 가능
 mongo_ip = "127.0.0.1"
-mongo_port = 41411
+mongo_port = 36639
 
 # 드라이버 실행 및 옵션 정의
 options = webdriver.ChromeOptions()
 options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3')   # 차단 방지 user-agent 설정
 options.add_argument("--start-maximized")   # 화면 크게
 options.add_experimental_option("detach", True) # 자동종료 방지(드라이버 유지)
+options.add_argument("headless")
 driver = webdriver.Chrome(options=options)
 
 # pymongo client 생성
 client = MongoClient(mongo_ip, mongo_port) # minikube service mongodb --url
-
-
 
 # 페이지 스크롤
 def page_scroll(class_name):
@@ -135,7 +134,7 @@ def detail_info():
     print("dic", json_detail_info)
     return json_detail_info
 
-### 크롤링 시작 함수
+# 크롤링 시작 함수
 def crwl_data():
     driver.get(url=URL)
 
@@ -173,7 +172,7 @@ def crwl_data():
 
 
 
-    db_matgo.metadata.insert_one(json_data)
+    db_matgo.metadata.insert_many(json_data)
     all_metadata = list(db_matgo.metadata.find({}))
     print(all_metadata)
 
