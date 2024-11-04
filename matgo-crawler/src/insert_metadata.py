@@ -57,7 +57,7 @@ options = webdriver.ChromeOptions()
 options.add_argument(f'--user-agent={random.choice(user_agents)}')
 options.add_argument("--start-maximized")   # 화면 크게
 options.add_experimental_option("detach", True) # 자동종료 방지(드라이버 유지)
-#options.add_argument("--headless=chrome")
+options.add_argument("--headless=chrome")
 driver = webdriver.Chrome(options=options)
 
 # pymongo client 생성
@@ -113,13 +113,25 @@ def detail_info():
     soup = BeautifulSoup(result_page, 'html.parser')
     
     # 가게 상세 정보 추출
+    # mongo
     detail_ele = soup.find('div', class_='PIbes')
+    subject_ele = soup.find('div', class_='zD5Nm undefined')
     time.sleep(random.uniform(1, 2))
-    detail_addr = detail_ele.find('div', class_='vV_z_').get_text() if detail_ele else None
+    detail_addr = detail_ele.find('span', class_='LDgIH').get_text() if detail_ele else None
     current_status = detail_ele.find('em').get_text() if detail_ele else None
     time.sleep(random.uniform(1, 2))
     time_ele = soup.find('time', {'aria-hidden': 'true'}).get_text() if detail_ele else None
     strt_time, end_time = (time_ele, None) if current_status == '영업 종료' else (None, time_ele)
+    # mysql
+    store_id = "확인 필요"
+    store_nm = subject_ele.find('span', class_='GHAhO').get_text() if subject_ele else None
+    address = detail_ele.find('span', class_='LDgIH').get_text() if detail_ele else None
+    tel_no = detail_ele.find('span', class_='xlx7Q').get_text() if detail_ele else None
+    review_cn = detail_ele.find('em', class_='place_section_count').get_text() if detail_ele else None
+    star_rate = subject_ele.find('span', class_='PXMot LXIwF').get_text() if subject_ele else None
+    latitude = "확인 필요"
+    longitude = "확인 필요"
+    category = subject_ele.find('span', class_='lnJFt').get_text() if subject_ele else None
 
     # 이미지 리스트 수집
     tab_list = driver.find_elements(By.CSS_SELECTOR, '.veBoZ')
@@ -184,20 +196,21 @@ def conn_mysql():
 def insert_mysql(connection, detail_info_list):
     cursor = connection.cursor()
     insert_query = """
-    INSERT INTO your_table_name (img_url, detail_addr, store_id, current_status, strt_time, end_time, naver_url, img_thumbs_url)
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+    INSERT INTO your_table_name (store_id, store_nm, address, tel_no, review_cn, star_rate, latitude, longitude, category)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
     """ # 예시 쿼리, 변경 필요
     try:
         for detail_info in detail_info_list:
             cursor.execute(insert_query, (
-                detail_info['img_url'],
-                detail_info['detail_addr'],
                 detail_info['store_id'],
-                detail_info['current_status'],
-                detail_info['strt_time'],
-                detail_info['end_time'],
-                detail_info['naver_url'],
-                detail_info['img_thumbs_url']
+                detail_info['store_nm'],
+                detail_info['address'],
+                detail_info['tel_no'],
+                detail_info['review_cn'],
+                detail_info['star_rate'],
+                detail_info['latitude'],
+                detail_info['longitude'],
+                detail_info['category']
             )) # 예시 쿼리, 변경 필요
         connection.commit()  # 변경 사항 커밋
         print("데이터가 MySQL에 성공적으로 삽입되었습니다.")
@@ -233,11 +246,11 @@ def crwl_data():
 
 
     # mysql에 저장할 때는 detail_info_list 수정 필요
-    mysql_connection = conn_mysql()
-    insert_mysql(mysql_connection, detail_info_list)
+    # mysql_connection = conn_mysql()
+    # insert_mysql(mysql_connection, detail_info_list)
 
-    if mysql_connection:
-        mysql_connection.close()  # MySQL 연결 종료
+    # if mysql_connection:
+    #     mysql_connection.close()  # MySQL 연결 종료
 
 # test
 crwl_data()
