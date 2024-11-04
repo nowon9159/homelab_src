@@ -22,6 +22,7 @@ from selenium.webdriver import ActionChains
 from urllib.parse import urlparse, urlunparse # url query 정리
 import re
 import json
+import random
 
 ## mongodb
 from pymongo import MongoClient
@@ -30,9 +31,10 @@ from bson import json_util
 import mysql.connector
 from mysql.connector import Error
 
+
 # 상수
 ## 크롤링
-WAIT_TIMEOUT = 15 ## 대기 시간(초)
+WAIT_TIMEOUT = 30 ## 대기 시간(초)
 KEYWORD = "맥도날드 명동" ## 테스트코드 맥도날드 명동점
 URL = f"https://map.naver.com/restaurant/list?query={KEYWORD}" # https://pcmap.place.naver.com/place/list?query <-- 해당 url도 가능
 
@@ -46,11 +48,23 @@ mysql_pw = "1q2w3e4r!"
 mysql_db_name = "matgo"
 
 # 드라이버 실행 및 옵션 정의
+user_agents = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.101 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:78.0) Gecko/20100101 Firefox/78.0",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.2 Safari/605.1.15",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36",
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:88.0) Gecko/20100101 Firefox/88.0",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36"
+]
 options = webdriver.ChromeOptions()
-options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3')   # 차단 방지 user-agent 설정
+options.add_argument(f'--user-agent={random.choice(user_agents)}')
 options.add_argument("--start-maximized")   # 화면 크게
 options.add_experimental_option("detach", True) # 자동종료 방지(드라이버 유지)
-options.add_argument("headless")
+#options.add_argument("--headless=chrome")
 driver = webdriver.Chrome(options=options)
 
 # pymongo client 생성
@@ -79,6 +93,7 @@ def focus_iframe(type):
     if type == 'list':
         iframe = driver.find_element(By.XPATH,'//*[@id="searchIframe"]')
     elif type == 'detail':
+        time.sleep(5)
         wait = WebDriverWait(driver, WAIT_TIMEOUT)
         wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="entryIframe"]')))
         
@@ -122,6 +137,9 @@ def detail_info():
 
     # img_list의 URL마다 개별 dict 구성
     detail_info_list = []
+    
+    
+
     for img_url in img_list:
         detail_info = {
             'img_url': img_url,
@@ -134,6 +152,8 @@ def detail_info():
             'img_thumbs_url': img_list[0]  # 첫 번째 이미지 썸네일로 설정
         }
         detail_info_list.append(detail_info)
+    
+    
     
     print("Detail info list 구성 완료:", detail_info_list)
     return detail_info_list
@@ -190,7 +210,7 @@ def insert_mysql(connection, detail_info_list):
 # 크롤링 시작 함수
 def crwl_data():
     driver.get(url=URL)
-    WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.XPATH, '//*[@id="section_content"]/div')))
+    WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.XPATH, '//*[@id="section_content"]/div'))) 
     try:
         driver.find_element(By.XPATH, '//*[@id="searchIframe"]')
         focus_iframe('list')
