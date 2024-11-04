@@ -7,6 +7,8 @@
 ### 1. OpenAI API를 이용하면 이미지 분석이 가능할 것이다. 해당 SDK를 이용해 이미지 분석 프롬프트를 날려 이미지 분석을 할것.
 ## 이미지 url 크롤링 과정 변경
 ### 1. 현재는 한 페이지의 url만 긁어 오는데 이미지 분석 과정을 앞에 두고 url의 이미지 분석이 완료되어 음식 사진이라고 판별된 url만 dict에 추가
+## RDB 컬럼에 맞춘 json 데이터 변경
+### 1. store_id, store_nm, address, tel_no, review_cn, star_rate, latitude, longitude, category
 
 # lib
 ## selenium
