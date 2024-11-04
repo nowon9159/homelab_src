@@ -2,9 +2,11 @@
 ### place 서치 시 pcmap으로 리다이렉트 되며 정보 조회됨
 ### 검색명에 따라 좌측 iframe의 DOM 구조가 바뀜 (list page or detail page )
 
-# 기대 json data에 따른 로직 변경 필요
-## 1. 현재는 json data를 한개만 담아서 전역변수인 img_list에 복수의 값을 담는데, 이미지 url 하나 당 ObjectId 하나가 되어야 함
-## 1.1 1번을 만족하려면 현재 select_tab_img() 로직을 조금 수정해서 current_img 전역 변수에 하나씩 담고 하나씩 변경하는 식으로 오브젝트 여러개를 만들어 pymongo의 insert_many()를 이용해 리스트 안에 있는 여러 개의 object를 insert 해야할 듯
+# 변경해야할 사항 (241104)
+## OpenAI 이용한 이미지 분석
+### 1. OpenAI API를 이용하면 이미지 분석이 가능할 것이다. 해당 SDK를 이용해 이미지 분석 프롬프트를 날려 이미지 분석을 할것.
+## 이미지 url 크롤링 과정 변경
+### 1. 현재는 한 페이지의 url만 긁어 오는데 이미지 분석 과정을 앞에 두고 url의 이미지 분석이 완료되어 음식 사진이라고 판별된 url만 dict에 추가
 
 # lib
 ## selenium
@@ -105,7 +107,7 @@ def detail_info():
     current_status = detail_ele.find('em').get_text() if detail_ele else None
     time_ele = soup.find('time', {'aria-hidden': 'true'}).get_text() if detail_ele else None
     strt_time, end_time = (time_ele, None) if current_status == '영업 종료' else (None, time_ele)
-    
+
     # 이미지 리스트 수집
     tab_list = driver.find_elements(By.CSS_SELECTOR, '.veBoZ')
     for tab in tab_list:
