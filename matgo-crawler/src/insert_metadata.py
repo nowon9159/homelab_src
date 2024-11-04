@@ -31,7 +31,6 @@ from bson import json_util
 import mysql.connector
 from mysql.connector import Error
 
-
 # 상수
 ## 크롤링
 WAIT_TIMEOUT = 30 ## 대기 시간(초)
@@ -49,16 +48,10 @@ mysql_db_name = "matgo"
 
 # 드라이버 실행 및 옵션 정의
 user_agents = [
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36",
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.101 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:78.0) Gecko/20100101 Firefox/78.0",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.2 Safari/605.1.15",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36",
-    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:88.0) Gecko/20100101 Firefox/88.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36"
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:129.0) Gecko/20100101 Firefox/129.0",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0"
 ]
 options = webdriver.ChromeOptions()
 options.add_argument(f'--user-agent={random.choice(user_agents)}')
@@ -79,6 +72,7 @@ def page_scroll(class_name):
             # 요소 내에서 아래로 3000px 스크롤
             driver.execute_script("arguments[0].scrollTop += 3000;", scroll_container)
             # 페이지 로드를 기다림
+            time.sleep(random.uniform(1, 2))
             time.sleep(0.5)  # 동적 콘텐츠 로드 시간에 따라 조절
             # 스크롤 높이 계산
             new_height = driver.execute_script("return arguments[0].scrollHeight", scroll_container)
@@ -93,7 +87,6 @@ def focus_iframe(type):
     if type == 'list':
         iframe = driver.find_element(By.XPATH,'//*[@id="searchIframe"]')
     elif type == 'detail':
-        time.sleep(5)
         wait = WebDriverWait(driver, WAIT_TIMEOUT)
         wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="entryIframe"]')))
         
@@ -103,6 +96,7 @@ def focus_iframe(type):
 # img_list의 모든 URL에 대해 dict 리스트 구성
 def detail_info():
     focus_iframe('detail')
+    time.sleep(random.uniform(2, 3))
 
     # 현재 URL 가져오기 및 처리
     current_url = driver.current_url
@@ -120,8 +114,10 @@ def detail_info():
     
     # 가게 상세 정보 추출
     detail_ele = soup.find('div', class_='PIbes')
+    time.sleep(random.uniform(1, 2))
     detail_addr = detail_ele.find('div', class_='vV_z_').get_text() if detail_ele else None
     current_status = detail_ele.find('em').get_text() if detail_ele else None
+    time.sleep(random.uniform(1, 2))
     time_ele = soup.find('time', {'aria-hidden': 'true'}).get_text() if detail_ele else None
     strt_time, end_time = (time_ele, None) if current_status == '영업 종료' else (None, time_ele)
 
@@ -131,8 +127,10 @@ def detail_info():
         if tab.text == '사진':
             tab.click()
             WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.CLASS_NAME, 'wzrbN')))
+            time.sleep(random.uniform(2, 3))
             img_elems = driver.find_elements(By.CLASS_NAME, 'wzrbN')
             img_list = [img.find_element(By.XPATH, './/a/img').get_attribute('src') for img in img_elems]
+            time.sleep(0.5)
             break
 
     # img_list의 URL마다 개별 dict 구성
@@ -151,6 +149,7 @@ def detail_info():
             'naver_url': cleaned_url,
             'img_thumbs_url': img_list[0]  # 첫 번째 이미지 썸네일로 설정
         }
+        time.sleep(0.2)
         detail_info_list.append(detail_info)
     
     
