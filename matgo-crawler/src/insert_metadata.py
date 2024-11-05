@@ -7,8 +7,6 @@
 ### 1. OpenAI API를 이용하면 이미지 분석이 가능할 것이다. 해당 SDK를 이용해 이미지 분석 프롬프트를 날려 이미지 분석을 할것.
 ## 이미지 url 크롤링 과정 변경
 ### 1. 현재는 한 페이지의 url만 긁어 오는데 이미지 분석 과정을 앞에 두고 url의 이미지 분석이 완료되어 음식 사진이라고 판별된 url만 dict에 추가
-## RDB 컬럼에 맞춘 json 데이터 변경
-### 1. store_id, store_nm, address, tel_no, review_cn, star_rate, latitude, longitude, category
 
 # lib
 ## selenium
@@ -37,7 +35,7 @@ load_dotenv()
 
 # 상수
 ## 크롤링
-WAIT_TIMEOUT = 30 ## 대기 시간(초)
+WAIT_TIMEOUT = random.uniform(10, 11) ## 대기 시간(초)
 KEYWORD = "맥도날드 명동" ## 테스트코드 맥도날드 명동점
 URL = f"https://map.naver.com/restaurant/list?query={KEYWORD}" # https://pcmap.place.naver.com/place/list?query <-- 해당 url도 가능
 
@@ -110,16 +108,15 @@ def detail_info():
     parsed_url = urlparse(current_url)
     cleaned_url = urlunparse((parsed_url.scheme, parsed_url.netloc, parsed_url.path, '', '', ''))
 
-    # store_id 추출
-    url_path = urlparse(cleaned_url).path
-    url_path_match = re.search(r'place/(\d+)', url_path)
-    store_id = url_path_match.group(1) if url_path_match else None
-
     # 페이지 소스 가져와 BeautifulSoup로 파싱
     result_page = driver.page_source
     soup = BeautifulSoup(result_page, 'html.parser')
     
     # 가게 상세 정보 추출
+    # store_id 추출
+    url_path = urlparse(cleaned_url).path
+    url_path_match = re.search(r'place/(\d+)', url_path)
+    store_id = url_path_match.group(1) if url_path_match else None
     # mongo
     detail_ele = soup.find('div', class_='PIbes')
     subject_ele = soup.find('div', class_='zD5Nm undefined')
@@ -130,15 +127,18 @@ def detail_info():
     time_ele = soup.find('time', {'aria-hidden': 'true'}).get_text() if detail_ele else None
     strt_time, end_time = (time_ele, None) if current_status == '영업 종료' else (None, time_ele)
     # mysql
-    # store_id = "확인 필요"
-    # store_nm = subject_ele.find('span', class_='GHAhO').get_text() if subject_ele else None
-    # address = detail_ele.find('span', class_='LDgIH').get_text() if detail_ele else None
-    # tel_no = detail_ele.find('span', class_='xlx7Q').get_text() if detail_ele else None
-    # review_cn = detail_ele.find('em', class_='place_section_count').get_text() if detail_ele else None
-    # star_rate = subject_ele.find('span', class_='PXMot LXIwF').get_text() if subject_ele else None
-    # latitude = "확인 필요"
-    # longitude = "확인 필요"
-    # category = subject_ele.find('span', class_='lnJFt').get_text() if subject_ele else None
+    store_nm = subject_ele.find('span', class_='GHAhO').get_text() if subject_ele else None
+    address = detail_ele.find('span', class_='LDgIH').get_text() if detail_ele else None
+    tel_no = detail_ele.find('span', class_='xlx7Q').get_text() if detail_ele else None
+    star_rate = subject_ele.find('span', class_='PXMot LXIwF').get_text() if subject_ele else None
+    visitor_review_txt = subject_ele.find('a', attrs={"href": f"/restaurant/{store_id}/review/visitor"}).get_text() if subject_ele else None
+    blog_review_txt = subject_ele.find('a', attrs={"href": f"/restaurant/{store_id}/review/ugc"}).get_text() if subject_ele else None
+    visitor_review_cn = re.search(r'\b\d{1,3}(?:,\d{3})*\b', visitor_review_txt).group()
+    blog_review_cn = re.search(r'\b\d{1,3}(?:,\d{3})*\b', blog_review_txt).group()
+    review_cn = int(visitor_review_cn.replace(',', '')) + int(blog_review_cn.replace(',', ''))
+    latitude = "확인 필요"
+    longitude = "확인 필요"
+    category = subject_ele.find('span', class_='lnJFt').get_text() if subject_ele else None
 
     # 이미지 리스트 수집
     tab_list = driver.find_elements(By.CSS_SELECTOR, '.veBoZ')
