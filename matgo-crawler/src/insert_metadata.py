@@ -14,22 +14,26 @@
 ## selenium
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-import time
 from bs4 import BeautifulSoup
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC # expected_conditions (EC): Selenium에서 제공하는 여러 가지 조건을 정의한 모듈
 from selenium.webdriver import ActionChains
-from urllib.parse import urlparse, urlunparse # url query 정리
-import re
-import json
-import random
-
 ## mongodb
 from pymongo import MongoClient
 from bson import json_util
 ## mysql
 import mysql.connector
 from mysql.connector import Error
+## common
+from urllib.parse import urlparse, urlunparse # url query 정리
+import time
+import re
+import json
+import random
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # 상수
 ## 크롤링
@@ -40,6 +44,8 @@ URL = f"https://map.naver.com/restaurant/list?query={KEYWORD}" # https://pcmap.p
 ## DB
 mongo_ip = "127.0.0.1"
 mongo_port = 40441
+mongo_username = os.getenv("MONGO_DB_USERNAME")
+mongo_pw = os.getenv("MONGO_DB_PW")
 mysql_ip = "127.0.0.1"
 mysql_port = 40120
 mysql_admin = "test"
@@ -57,11 +63,12 @@ options = webdriver.ChromeOptions()
 options.add_argument(f'--user-agent={random.choice(user_agents)}')
 options.add_argument("--start-maximized")   # 화면 크게
 options.add_experimental_option("detach", True) # 자동종료 방지(드라이버 유지)
-options.add_argument("--headless=chrome")
+#options.add_argument("--headless=chrome")
 driver = webdriver.Chrome(options=options)
 
 # pymongo client 생성
-client = MongoClient(mongo_ip, mongo_port) # minikube service mongodb --url
+#client = MongoClient(mongo_ip, mongo_port) # minikube service mongodb --url
+client = MongoClient(f"mongodb+srv://{mongo_username}:{mongo_pw}@cluster0.qehwj.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0", tls=True, tlsAllowInvalidCertificates=True)
 
 # 페이지 스크롤
 def page_scroll(class_name):
@@ -123,15 +130,15 @@ def detail_info():
     time_ele = soup.find('time', {'aria-hidden': 'true'}).get_text() if detail_ele else None
     strt_time, end_time = (time_ele, None) if current_status == '영업 종료' else (None, time_ele)
     # mysql
-    store_id = "확인 필요"
-    store_nm = subject_ele.find('span', class_='GHAhO').get_text() if subject_ele else None
-    address = detail_ele.find('span', class_='LDgIH').get_text() if detail_ele else None
-    tel_no = detail_ele.find('span', class_='xlx7Q').get_text() if detail_ele else None
-    review_cn = detail_ele.find('em', class_='place_section_count').get_text() if detail_ele else None
-    star_rate = subject_ele.find('span', class_='PXMot LXIwF').get_text() if subject_ele else None
-    latitude = "확인 필요"
-    longitude = "확인 필요"
-    category = subject_ele.find('span', class_='lnJFt').get_text() if subject_ele else None
+    # store_id = "확인 필요"
+    # store_nm = subject_ele.find('span', class_='GHAhO').get_text() if subject_ele else None
+    # address = detail_ele.find('span', class_='LDgIH').get_text() if detail_ele else None
+    # tel_no = detail_ele.find('span', class_='xlx7Q').get_text() if detail_ele else None
+    # review_cn = detail_ele.find('em', class_='place_section_count').get_text() if detail_ele else None
+    # star_rate = subject_ele.find('span', class_='PXMot LXIwF').get_text() if subject_ele else None
+    # latitude = "확인 필요"
+    # longitude = "확인 필요"
+    # category = subject_ele.find('span', class_='lnJFt').get_text() if subject_ele else None
 
     # 이미지 리스트 수집
     tab_list = driver.find_elements(By.CSS_SELECTOR, '.veBoZ')
