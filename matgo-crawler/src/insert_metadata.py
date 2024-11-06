@@ -2,7 +2,7 @@
 ### place 서치 시 pcmap으로 리다이렉트 되며 정보 조회됨
 ### 검색명에 따라 좌측 iframe의 DOM 구조가 바뀜 (list page or detail page )
 
-# 변경해야할 사항 (241104)
+# TODO List (241104)
 ## OpenAI 이용한 이미지 분석
 ### 1. OpenAI API를 이용하면 이미지 분석이 가능할 것이다. 해당 SDK를 이용해 이미지 분석 프롬프트를 날려 이미지 분석을 할것.
 ## 이미지 url 크롤링 과정 변경
@@ -100,6 +100,39 @@ def focus_iframe(type):
         iframe = driver.find_element(By.XPATH,'//*[@id="entryIframe"]')
     driver.switch_to.frame(iframe)
 
+# 위도 경도 좌표 구하는 탭 추가 후 값 return
+def get_lat_lon(input_address):
+    lat_lon_url = "https://gps.aply.biz/"
+    #driver.execute_script(f'window.open({lat_lon_url});')
+    driver.execute_script("window.open('');")
+    time.sleep(1)
+
+    driver.switch_to.window(driver.window_handles[-1])  #새로 연 탭으로 이동
+    driver.get(url=lat_lon_url)
+
+    address = driver.find_element(By.XPATH, '//*[@id="gtco-header2"]/div/div[3]/div[2]/div[1]/input')
+
+    address.send_keys(input_address)
+
+    driver.find_element(By.XPATH, '//*[@id="btnGetGpsByAddress"]').click()
+
+    wait = WebDriverWait(driver, 5)
+
+    lat = driver.find_element(By.XPATH, '//*[@id="gtco-header2"]/div/div[3]/div[1]/div[1]/input')
+    lon = driver.find_element(By.XPATH, '//*[@id="gtco-header2"]/div/div[3]/div[1]/div[2]/input')
+
+    wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="askModal"]/div/div/div[2]')))
+
+    time.sleep(3)
+
+    lat_value = lat.get_attribute("value")
+    lon_value = lon.get_attribute("value")
+
+    time.sleep(1)
+    
+    driver.close()
+    return lat_value, lon_value
+
 # img_list의 모든 URL에 대해 dict 리스트 구성
 def detail_info():
     focus_iframe('detail')
@@ -114,33 +147,33 @@ def detail_info():
     result_page = driver.page_source
     soup = BeautifulSoup(result_page, 'html.parser')
     
+    detail_ele = soup.find('div', class_='PIbes')
+    subject_ele = soup.find('div', class_='zD5Nm undefined')
+
     # 가게 상세 정보 추출
-    # store_id 추출
+    # common
     url_path = urlparse(cleaned_url).path
     url_path_match = re.search(r'place/(\d+)', url_path)
     store_id = url_path_match.group(1) if url_path_match else None
     # mongo
-    detail_ele = soup.find('div', class_='PIbes')
-    subject_ele = soup.find('div', class_='zD5Nm undefined')
-    time.sleep(random.uniform(1, 2))
     detail_addr = detail_ele.find('span', class_='LDgIH').get_text() if detail_ele else None
     current_status = detail_ele.find('em').get_text() if detail_ele else None
-    time.sleep(random.uniform(1, 2))
     time_ele = soup.find('time', {'aria-hidden': 'true'}).get_text() if detail_ele else None
     strt_time, end_time = (time_ele, None) if current_status == '영업 종료' else (None, time_ele)
     # mysql
     store_nm = subject_ele.find('span', class_='GHAhO').get_text() if subject_ele else None
     address = detail_ele.find('span', class_='LDgIH').get_text() if detail_ele else None
     tel_no = detail_ele.find('span', class_='xlx7Q').get_text() if detail_ele else None
-    star_rate = subject_ele.find('span', class_='PXMot LXIwF').get_text() if subject_ele else None
+    star_rate = (subject_ele.find('span', class_='PXMot LXIwF').get_text() if subject_ele.find('span', class_='PXMot LXIwF') else "Node")
     visitor_review_txt = subject_ele.find('a', attrs={"href": f"/restaurant/{store_id}/review/visitor"}).get_text() if subject_ele else None
     blog_review_txt = subject_ele.find('a', attrs={"href": f"/restaurant/{store_id}/review/ugc"}).get_text() if subject_ele else None
     visitor_review_cn = re.search(r'\b\d{1,3}(?:,\d{3})*\b', visitor_review_txt).group()
     blog_review_cn = re.search(r'\b\d{1,3}(?:,\d{3})*\b', blog_review_txt).group()
     review_cn = int(visitor_review_cn.replace(',', '')) + int(blog_review_cn.replace(',', ''))
-    latitude = "확인 필요"
-    longitude = "확인 필요"
     category = subject_ele.find('span', class_='lnJFt').get_text() if subject_ele else None
+    lat_lon_list = get_lat_lon(input_address=address)
+    latitude = lat_lon_list[0]
+    longitude = lat_lon_list[1]
 
     # 이미지 리스트 수집
     tab_list = driver.find_elements(By.CSS_SELECTOR, '.veBoZ')
@@ -156,8 +189,6 @@ def detail_info():
 
     # img_list의 URL마다 개별 dict 구성
     detail_info_list = []
-    
-    
 
     for img_url in img_list:
         detail_info = {
@@ -172,8 +203,6 @@ def detail_info():
         }
         time.sleep(0.2)
         detail_info_list.append(detail_info)
-    
-    
     
     print("Detail info list 구성 완료:", detail_info_list)
     return detail_info_list
@@ -262,5 +291,8 @@ def crwl_data():
     #     mysql_connection.close()  # MySQL 연결 종료
 
 # test
-crwl_data()
-driver.quit()
+try: 
+    crwl_data()
+except:
+    driver.quit()
+    
