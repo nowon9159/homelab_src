@@ -2,13 +2,15 @@
 ### place 서치 시 pcmap으로 리다이렉트 되며 정보 조회됨
 ### 검색명에 따라 좌측 iframe의 DOM 구조가 바뀜 (list page or detail page )
 
-# TODO List (241104)
+# TODO List (241111)
 ## OpenAI 이용한 이미지 분석
 ### 1. OpenAI API를 이용하면 이미지 분석이 가능할 것이다. 해당 SDK를 이용해 이미지 분석 프롬프트를 날려 이미지 분석을 할것.
 ## 이미지 url 크롤링 과정 변경
 ### 1. 현재는 한 페이지의 url만 긁어 오는데 이미지 분석 과정을 앞에 두고 url의 이미지 분석이 완료되어 음식 사진이라고 판별된 url만 dict에 추가
-## 도로명 주소 기반 좌표 변환 필요
-### 1. 현재 RDB에서 latitude와 longitude를 넣어주기 위해서는 국토교통부 제공 API를 사용해서 도로명 주소 기반 좌표 변환이 필요해보임. 일일 최대 요청 건수는 40000 건이라고 한다.
+### 2. dict에 추가되고 특정 갯수 x 를 넘지 않는 경우 이미지 불러오기 및 url 추가 과정 반복
+## 조건문으로 각 DB insert
+### 1. mysql인 경우 특정 로직, mongodb인 경우 특정 로직으로 나누어 변수 생성 및 dict 생성
+
 
 # lib
 ## selenium
@@ -148,11 +150,7 @@ def detail_info():
     detail_ele = soup.find('div', class_='PIbes')
     subject_ele = soup.find('div', class_='zD5Nm undefined')
 
-    # review_cn 연산
-    visitor_review_txt = subject_ele.find('a', attrs={"href": f"/restaurant/{store_id}/review/visitor"}).get_text() if subject_ele else None
-    blog_review_txt = subject_ele.find('a', attrs={"href": f"/restaurant/{store_id}/review/ugc"}).get_text() if subject_ele else None
-    visitor_review_cn = re.search(r'\b\d{1,3}(?:,\d{3})*\b', visitor_review_txt).group()
-    blog_review_cn = re.search(r'\b\d{1,3}(?:,\d{3})*\b', blog_review_txt).group()
+    
 
     # 가게 상세 정보 추출
     # common
@@ -169,13 +167,19 @@ def detail_info():
     address = detail_ele.find('span', class_='LDgIH').get_text() if detail_ele else None
     tel_no = detail_ele.find('span', class_='xlx7Q').get_text() if detail_ele else None
     star_rate = (subject_ele.find('span', class_='PXMot LXIwF').get_text() if subject_ele.find('span', class_='PXMot LXIwF') else "Node")
-    review_cn = int(visitor_review_cn.replace(',', '')) + int(blog_review_cn.replace(',', ''))
     category = subject_ele.find('span', class_='lnJFt').get_text() if subject_ele else None
     lat_lon_list = get_lat_lon(input_address=address)
     latitude = lat_lon_list[0]
     longitude = lat_lon_list[1]
     tags = "test"
     driver.switch_to.window(driver.window_handles[0])
+
+    # review_cn 연산
+    visitor_review_txt = subject_ele.find('a', attrs={"href": f"/restaurant/{store_id}/review/visitor"}).get_text() if subject_ele else None
+    blog_review_txt = subject_ele.find('a', attrs={"href": f"/restaurant/{store_id}/review/ugc"}).get_text() if subject_ele else None
+    visitor_review_cn = re.search(r'\b\d{1,3}(?:,\d{3})*\b', visitor_review_txt).group()
+    blog_review_cn = re.search(r'\b\d{1,3}(?:,\d{3})*\b', blog_review_txt).group()
+    review_cn = int(visitor_review_cn.replace(',', '')) + int(blog_review_cn.replace(',', ''))
 
     # 이미지 리스트 수집
     tab_list = driver.find_elements(By.CSS_SELECTOR, '.veBoZ')
@@ -222,7 +226,7 @@ def detail_info():
 
     print("Detail info list 구성 완료:", mongo_detail_info_list)
     print("Detail info list 구성 완료:", mysql_detail_info)
-    return mongo_detail_info_list, mysql_detail_info
+    return mongo_detail_info_list, mysql_detail_info_list
 
 # MongoDB에 데이터 삽입 함수
 def conn_mongodb(detail_info_list):
@@ -252,7 +256,7 @@ def insert_mysql(connection, detail_info_list):
     cursor = connection.cursor()
     insert_query = """
     INSERT INTO your_table_name (store_id, store_nm, address, tel_no, review_cn, star_rate, latitude, longitude, image_url, tags, category) VALUES (%d, %s, %s, %s, %d, %d, %d, %d, %s, %s, %s)
-    """ # 예시 쿼리, 변경 필요
+    """ 
     try:
         for detail_info in detail_info_list:
             cursor.execute(insert_query, (
@@ -267,7 +271,7 @@ def insert_mysql(connection, detail_info_list):
                 detail_info['image_url'],
                 detail_info['tags'],
                 detail_info['category']
-            )) # 예시 쿼리, 변경 필요
+            )) 
         connection.commit()  # 변경 사항 커밋
         print("데이터가 MySQL에 성공적으로 삽입되었습니다.")
     except Error as e:
