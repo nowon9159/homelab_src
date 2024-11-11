@@ -18,6 +18,7 @@ from bs4 import BeautifulSoup
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC # expected_conditions (EC): Selenium에서 제공하는 여러 가지 조건을 정의한 모듈
 from selenium.webdriver import ActionChains
+from fake_useragent import UserAgent
 ## mongodb
 from pymongo import MongoClient
 from bson import json_util
@@ -53,18 +54,15 @@ mysql_pw = "1q2w3e4r!"
 mysql_db_name = "matgo"
 
 # 드라이버 실행 및 옵션 정의
-user_agents = [
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:129.0) Gecko/20100101 Firefox/129.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0"
-]
+ua = UserAgent(platforms="pc", browsers="chrome")
+user_agents = ua.random
 options = webdriver.ChromeOptions()
-options.add_argument(f'--user-agent={random.choice(user_agents)}')
+options.add_argument(f'--user-agent={user_agents}')
 options.add_argument("--start-maximized")   # 화면 크게
 options.add_experimental_option("detach", True) # 자동종료 방지(드라이버 유지)
 #options.add_argument("--headless=chrome")
 driver = webdriver.Chrome(options=options)
+
 
 # pymongo client 생성
 #client = MongoClient(mongo_ip, mongo_port) # minikube service mongodb --url
@@ -150,6 +148,12 @@ def detail_info():
     detail_ele = soup.find('div', class_='PIbes')
     subject_ele = soup.find('div', class_='zD5Nm undefined')
 
+    # review_cn 연산
+    visitor_review_txt = subject_ele.find('a', attrs={"href": f"/restaurant/{store_id}/review/visitor"}).get_text() if subject_ele else None
+    blog_review_txt = subject_ele.find('a', attrs={"href": f"/restaurant/{store_id}/review/ugc"}).get_text() if subject_ele else None
+    visitor_review_cn = re.search(r'\b\d{1,3}(?:,\d{3})*\b', visitor_review_txt).group()
+    blog_review_cn = re.search(r'\b\d{1,3}(?:,\d{3})*\b', blog_review_txt).group()
+
     # 가게 상세 정보 추출
     # common
     url_path = urlparse(cleaned_url).path
@@ -165,15 +169,13 @@ def detail_info():
     address = detail_ele.find('span', class_='LDgIH').get_text() if detail_ele else None
     tel_no = detail_ele.find('span', class_='xlx7Q').get_text() if detail_ele else None
     star_rate = (subject_ele.find('span', class_='PXMot LXIwF').get_text() if subject_ele.find('span', class_='PXMot LXIwF') else "Node")
-    visitor_review_txt = subject_ele.find('a', attrs={"href": f"/restaurant/{store_id}/review/visitor"}).get_text() if subject_ele else None
-    blog_review_txt = subject_ele.find('a', attrs={"href": f"/restaurant/{store_id}/review/ugc"}).get_text() if subject_ele else None
-    visitor_review_cn = re.search(r'\b\d{1,3}(?:,\d{3})*\b', visitor_review_txt).group()
-    blog_review_cn = re.search(r'\b\d{1,3}(?:,\d{3})*\b', blog_review_txt).group()
     review_cn = int(visitor_review_cn.replace(',', '')) + int(blog_review_cn.replace(',', ''))
     category = subject_ele.find('span', class_='lnJFt').get_text() if subject_ele else None
     lat_lon_list = get_lat_lon(input_address=address)
     latitude = lat_lon_list[0]
     longitude = lat_lon_list[1]
+    tags = "test"
+    driver.switch_to.window(driver.window_handles[0])
 
     # 이미지 리스트 수집
     tab_list = driver.find_elements(By.CSS_SELECTOR, '.veBoZ')
@@ -188,10 +190,11 @@ def detail_info():
             break
 
     # img_list의 URL마다 개별 dict 구성
-    detail_info_list = []
+    mongo_detail_info_list = []
+    mysql_detail_info_list = []
 
     for img_url in img_list:
-        detail_info = {
+        mongo_detail_info = {
             'img_url': img_url,
             'detail_addr': detail_addr,
             'store_id': store_id,
@@ -202,10 +205,24 @@ def detail_info():
             'img_thumbs_url': img_list[0]  # 첫 번째 이미지 썸네일로 설정
         }
         time.sleep(0.2)
-        detail_info_list.append(detail_info)
+        mongo_detail_info_list.append(mongo_detail_info)
     
-    print("Detail info list 구성 완료:", detail_info_list)
-    return detail_info_list
+    mysql_detail_info = {
+        'img_url': img_list,
+        'store_id': store_id,
+        'store_nm': store_nm,
+        'tel_no': tel_no,
+        'review_cn': review_cn,
+        'star_rate': star_rate,
+        'latitude': latitude,
+        'longitude': longitude,
+        'tags': tags,
+        'category': category,
+    }
+
+    print("Detail info list 구성 완료:", mongo_detail_info_list)
+    print("Detail info list 구성 완료:", mysql_detail_info)
+    return mongo_detail_info_list, mysql_detail_info
 
 # MongoDB에 데이터 삽입 함수
 def conn_mongodb(detail_info_list):
@@ -228,14 +245,13 @@ def conn_mysql():
         )
         print("MySQL 데이터베이스에 연결됨.")
     except Error as e:
-        print(f"오류 발생: '{e}'")
+        print(f"MySQL 데이터베이스 연결 오류 발생: '{e}'")
     return connection
 
 def insert_mysql(connection, detail_info_list):
     cursor = connection.cursor()
     insert_query = """
-    INSERT INTO your_table_name (store_id, store_nm, address, tel_no, review_cn, star_rate, latitude, longitude, category)
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+    INSERT INTO your_table_name (store_id, store_nm, address, tel_no, review_cn, star_rate, latitude, longitude, image_url, tags, category) VALUES (%d, %s, %s, %s, %d, %d, %d, %d, %s, %s, %s)
     """ # 예시 쿼리, 변경 필요
     try:
         for detail_info in detail_info_list:
@@ -248,12 +264,14 @@ def insert_mysql(connection, detail_info_list):
                 detail_info['star_rate'],
                 detail_info['latitude'],
                 detail_info['longitude'],
+                detail_info['image_url'],
+                detail_info['tags'],
                 detail_info['category']
             )) # 예시 쿼리, 변경 필요
         connection.commit()  # 변경 사항 커밋
         print("데이터가 MySQL에 성공적으로 삽입되었습니다.")
     except Error as e:
-        print(f"MySQL에 데이터 삽입 중 오류 발생: '{e}'")
+        print(f"MySQL에 데이터 삽입 중 오류 발생: \n '{e}'")
     finally:
         cursor.close()
 
@@ -278,21 +296,18 @@ def crwl_data():
     except Exception as e:
         print("목록에서 가게 검색에 실패했습니다:", e)
 
-    # 상세 정보 크롤링 및 DB에 저장
-    detail_info_list = detail_info()
-    conn_mongodb(detail_info_list)
+    # 상세 정보 크롤링 및 mongo DB에 저장
+    mongo_detail_info_list = detail_info()[0]
+    mysql_detail_info_list = detail_info()[1]
+    conn_mongodb(mongo_detail_info_list)
 
 
-    # mysql에 저장할 때는 detail_info_list 수정 필요
-    # mysql_connection = conn_mysql()
-    # insert_mysql(mysql_connection, detail_info_list)
+    # 상세 정보 크롤링 및 mysql DB에 저장
+    mysql_connection = conn_mysql()
+    insert_mysql(mysql_connection, mysql_detail_info_list)
 
-    # if mysql_connection:
-    #     mysql_connection.close()  # MySQL 연결 종료
+    if mysql_connection:
+        mysql_connection.close()  # MySQL 연결 종료
 
 # test
-try: 
-    crwl_data()
-except:
-    driver.quit()
-    
+crwl_data()
