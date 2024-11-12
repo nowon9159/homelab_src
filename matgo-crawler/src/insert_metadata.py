@@ -10,7 +10,11 @@
 ### 2. dict에 추가되고 특정 갯수 x 를 넘지 않는 경우 이미지 불러오기 및 url 추가 과정 반복
 ## 조건문으로 각 DB insert
 ### 1. mysql인 경우 특정 로직, mongodb인 경우 특정 로직으로 나누어 변수 생성 및 dict 생성
-
+## 리뷰 추가 사항
+### 1. mongodb는 int형, mysql은 str형
+### 2. 리뷰 검색해서 1번째 리뷰 긁어오기, mysql 적재, 추후 mongodb collection으로 옮기기
+## 모듈화
+### 1. mysql 적재, mongodb 적재 로직 나눠서 모듈화
 
 # lib
 ## selenium
@@ -150,8 +154,6 @@ def detail_info():
     detail_ele = soup.find('div', class_='PIbes')
     subject_ele = soup.find('div', class_='zD5Nm undefined')
 
-    
-
     # 가게 상세 정보 추출
     # common
     url_path = urlparse(cleaned_url).path
@@ -197,6 +199,9 @@ def detail_info():
     mongo_detail_info_list = []
     mysql_detail_info_list = []
 
+    mongo_detail_info = {}
+    mysql_detail_info = {}
+    
     for img_url in img_list:
         mongo_detail_info = {
             'img_url': img_url,
@@ -221,7 +226,7 @@ def detail_info():
         'latitude': latitude,
         'longitude': longitude,
         'tags': tags,
-        'category': category,
+        'category': category
     }
 
     print("Detail info list 구성 완료:", mongo_detail_info_list)
@@ -255,8 +260,8 @@ def conn_mysql():
 def insert_mysql(connection, detail_info_list):
     cursor = connection.cursor()
     insert_query = """
-    INSERT INTO your_table_name (store_id, store_nm, address, tel_no, review_cn, star_rate, latitude, longitude, image_url, tags, category) VALUES (%d, %s, %s, %s, %d, %d, %d, %d, %s, %s, %s)
-    """ 
+    INSERT INTO store_information (store_id, store_nm, address, tel_no, review_cn, star_rate, latitude, longitude, image_url, tags, category) VALUES (%d, %s, %s, %s, %d, %d, %d, %d, %s, %s, %s)
+    """
     try:
         for detail_info in detail_info_list:
             cursor.execute(insert_query, (
@@ -304,7 +309,6 @@ def crwl_data():
     mongo_detail_info_list = detail_info()[0]
     mysql_detail_info_list = detail_info()[1]
     conn_mongodb(mongo_detail_info_list)
-
 
     # 상세 정보 크롤링 및 mysql DB에 저장
     mysql_connection = conn_mysql()
