@@ -70,7 +70,7 @@ options.add_argument("--start-maximized")   # 화면 크게
 options.add_experimental_option("detach", True) # 자동종료 방지(드라이버 유지)
 #options.add_argument("--headless=chrome")
 driver = webdriver.Chrome(options=options)
-
+actions = ActionChains(driver)
 
 # pymongo client 생성
 #client = MongoClient(mongo_ip, mongo_port) # minikube service mongodb --url
@@ -301,7 +301,6 @@ def crwl_data():
         WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".SEARCH_MARKER > div")))
         focus_iframe('list')
 
-        actions = ActionChains(driver)
         actions.click(select_restaurant).perform()
         
     except Exception as e:
