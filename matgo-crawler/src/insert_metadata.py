@@ -40,6 +40,7 @@ import random
 import os
 from dotenv import load_dotenv
 
+# .env 파일 불러오기
 load_dotenv()
 
 # 상수
@@ -53,6 +54,7 @@ mongo_ip = "127.0.0.1"
 mongo_port = 40441
 mongo_username = os.getenv("MONGO_DB_USERNAME")
 mongo_pw = os.getenv("MONGO_DB_PW")
+mongo_client_url = f"mongodb+srv://{mongo_username}:{mongo_pw}@cluster0.qehwj.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 mysql_ip = "127.0.0.1"
 mysql_port = 40120
 mysql_admin = "test"
@@ -72,7 +74,7 @@ driver = webdriver.Chrome(options=options)
 
 # pymongo client 생성
 #client = MongoClient(mongo_ip, mongo_port) # minikube service mongodb --url
-client = MongoClient(f"mongodb+srv://{mongo_username}:{mongo_pw}@cluster0.qehwj.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0", tls=True, tlsAllowInvalidCertificates=True)
+client = MongoClient(mongo_client_url, tls=True, tlsAllowInvalidCertificates=True)
 
 # 페이지 스크롤
 def page_scroll(class_name):
@@ -125,7 +127,7 @@ def get_lat_lon(input_address):
     lat = driver.find_element(By.XPATH, '//*[@id="gtco-header2"]/div/div[3]/div[1]/div[1]/input')
     lon = driver.find_element(By.XPATH, '//*[@id="gtco-header2"]/div/div[3]/div[1]/div[2]/input')
 
-    wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="askModal"]/div/div/div[2]')))
+    wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="askModal"]/div/div/div[2]'))) # 모달 생성 대기
 
     time.sleep(3)
 
