@@ -76,6 +76,8 @@ actions = ActionChains(driver)
 #client = MongoClient(mongo_ip, mongo_port) # minikube service mongodb --url
 client = MongoClient(mongo_client_url, tls=True, tlsAllowInvalidCertificates=True)
 
+store_list = []
+
 # 페이지 스크롤
 def page_scroll(class_name):
     scroll_container = driver.find_element(By.CSS_SELECTOR, f".{class_name}")
@@ -89,10 +91,52 @@ def page_scroll(class_name):
             time.sleep(0.5)  # 동적 콘텐츠 로드 시간에 따라 조절
             # 스크롤 높이 계산
             new_height = driver.execute_script("return arguments[0].scrollHeight", scroll_container)
+
             # 스크롤이 더 이상 늘어나지 않으면 루프 종료
             if new_height == last_height:
                 break
             last_height = new_height
+
+def make_store_list():
+    container = WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.ID, "_pcmap_list_scroll_container"))
+    )
+    li_elements = container.find_elements(By.TAG_NAME, "li")
+
+    li_count = len(li_elements)
+
+    url_list = []
+
+    for i in range(1, li_count + 1):
+        # XPATH를 이용해 li 하위의 a 태그를 찾아 클릭
+        a_tag_xpath = f'//*[@id="_pcmap_list_scroll_container"]/ul/li[{i}]/div[1]/a'
+        a_tag = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, a_tag_xpath))
+        )
+        a_tag.click()
+
+        # URL이 변경될 시간을 기다린 후 현재 URL 저장
+        time.sleep(2)  # 대기 시간은 필요에 따라 조정 가능
+
+        # 현재 URL 가져오기 및 처리
+        parsed_url = urlparse(driver.current_url)
+        cleaned_url = urlunparse((parsed_url.scheme, parsed_url.netloc, parsed_url.path, '', '', ''))
+
+        url_path = urlparse(cleaned_url).path
+        url_path_match = re.search(r'place/(\d+)', url_path)
+        store_id = url_path_match.group(1) if url_path_match else None
+
+        store_list.append(store_id)
+
+        # 다시 목록 페이지로 돌아가기 (필요시 구현)
+        driver.back()
+        time.sleep(2)
+
+        # 목록 페이지로 돌아온 후 리스트 요소들 다시 로드
+        container = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.ID, "_pcmap_list_scroll_container"))
+        )
+        li_elements = container.find_elements(By.TAG_NAME, "li")
 
 # iframe 엘리먼트 지정
 def focus_iframe(type):
@@ -294,29 +338,54 @@ def crwl_data():
         driver.find_element(By.XPATH, '//*[@id="searchIframe"]')
         focus_iframe('list')
         page_scroll("Ryr1F")
+        make_store_list()
+        
         search_restaurant = driver.find_element(By.XPATH, f'//*[contains(text(),"{KEYWORD}")]')
-        select_restaurant = search_restaurant.find_element(By.XPATH, '../../../div/div/span')
-        
-        driver.switch_to.parent_frame()
-        WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".SEARCH_MARKER > div")))
-        focus_iframe('list')
 
-        actions.click(select_restaurant).perform()
-        
+        if search_restaurant:
+            select_restaurant = search_restaurant.find_element(By.XPATH, '../../../div/div/span')
+            
+            driver.switch_to.parent_frame()
+            WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".SEARCH_MARKER > div")))
+            focus_iframe('list')
+
+            actions.click(select_restaurant).perform()
+
+            # # 상세 정보 크롤링 및 mongo DB에 저장
+            # mongo_detail_info_list = detail_info()[0]
+            # mysql_detail_info_list = detail_info()[1]
+            # conn_mongodb(mongo_detail_info_list)
+
+            # # 상세 정보 크롤링 및 mysql DB에 저장
+            # mysql_connection = conn_mysql()
+            # insert_mysql(mysql_connection, mysql_detail_info_list)
+
+            # if mysql_connection:
+            #     mysql_connection.close()  # MySQL 연결 종료
+        elif not search_restaurant:
+            for store in store_list:
+                driver.get(url=f"https://map.naver.com/p/search/{KEYWORD}/place/{store}")
+            
+                driver.switch_to.parent_frame()
+                WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".SEARCH_MARKER > div")))
+                focus_iframe('list')
+
+                actions.click(select_restaurant).perform()
+
+                # 상세 정보 크롤링 및 mongo DB에 저장
+                mongo_detail_info_list = detail_info()[0]
+                mysql_detail_info_list = detail_info()[1]
+                conn_mongodb(mongo_detail_info_list)
+
+                # # 상세 정보 크롤링 및 mysql DB에 저장
+                # mysql_connection = conn_mysql()
+                # insert_mysql(mysql_connection, mysql_detail_info_list)
+
+                # if mysql_connection:
+                #     mysql_connection.close()  # MySQL 연결 종료
+
     except Exception as e:
         print("목록에서 가게 검색에 실패했습니다:", e)
-
-    # 상세 정보 크롤링 및 mongo DB에 저장
-    mongo_detail_info_list = detail_info()[0]
-    mysql_detail_info_list = detail_info()[1]
-    conn_mongodb(mongo_detail_info_list)
-
-    # 상세 정보 크롤링 및 mysql DB에 저장
-    mysql_connection = conn_mysql()
-    insert_mysql(mysql_connection, mysql_detail_info_list)
-
-    if mysql_connection:
-        mysql_connection.close()  # MySQL 연결 종료
 
 # test
 crwl_data()
