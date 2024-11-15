@@ -76,7 +76,7 @@ actions = ActionChains(driver)
 #client = MongoClient(mongo_ip, mongo_port) # minikube service mongodb --url
 client = MongoClient(mongo_client_url, tls=True, tlsAllowInvalidCertificates=True)
 
-store_list = []
+store_id_list = []
 
 # 페이지 스크롤
 def page_scroll(class_name):
@@ -126,7 +126,7 @@ def make_store_list():
         url_path_match = re.search(r'place/(\d+)', url_path)
         store_id = url_path_match.group(1) if url_path_match else None
 
-        store_list.append(store_id)
+        store_id_list.append(store_id)
 
         # 다시 목록 페이지로 돌아가기 (필요시 구현)
         driver.back()
@@ -363,7 +363,7 @@ def crwl_data():
             # if mysql_connection:
             #     mysql_connection.close()  # MySQL 연결 종료
         elif not search_restaurant:
-            for store in store_list:
+            for store in store_id_list:
                 driver.get(url=f"https://map.naver.com/p/search/{KEYWORD}/place/{store}")
             
                 driver.switch_to.parent_frame()
