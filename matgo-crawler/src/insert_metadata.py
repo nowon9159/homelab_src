@@ -46,7 +46,7 @@ load_dotenv()
 # 상수
 ## 크롤링
 WAIT_TIMEOUT = random.uniform(10, 11) ## 대기 시간(초)
-KEYWORD = "맥도날드 명동" ## 테스트코드 맥도날드 명동점
+KEYWORD = "김치찌개" ## 테스트코드 맥도날드 명동점
 URL = f"https://map.naver.com/restaurant/list?query={KEYWORD}" # https://pcmap.place.naver.com/place/list?query <-- 해당 url도 가능
 
 ## DB
@@ -97,47 +97,6 @@ def page_scroll(class_name):
                 break
             last_height = new_height
 
-def make_store_list():
-    container = WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.ID, "_pcmap_list_scroll_container"))
-    )
-    li_elements = container.find_elements(By.TAG_NAME, "li")
-
-    li_count = len(li_elements)
-
-    url_list = []
-
-    for i in range(1, li_count + 1):
-        # XPATH를 이용해 li 하위의 a 태그를 찾아 클릭
-        a_tag_xpath = f'//*[@id="_pcmap_list_scroll_container"]/ul/li[{i}]/div[1]/a'
-        a_tag = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.XPATH, a_tag_xpath))
-        )
-        a_tag.click()
-
-        # URL이 변경될 시간을 기다린 후 현재 URL 저장
-        time.sleep(2)  # 대기 시간은 필요에 따라 조정 가능
-
-        # 현재 URL 가져오기 및 처리
-        parsed_url = urlparse(driver.current_url)
-        cleaned_url = urlunparse((parsed_url.scheme, parsed_url.netloc, parsed_url.path, '', '', ''))
-
-        url_path = urlparse(cleaned_url).path
-        url_path_match = re.search(r'place/(\d+)', url_path)
-        store_id = url_path_match.group(1) if url_path_match else None
-
-        store_id_list.append(store_id)
-
-        # 다시 목록 페이지로 돌아가기 (필요시 구현)
-        driver.back()
-        time.sleep(2)
-
-        # 목록 페이지로 돌아온 후 리스트 요소들 다시 로드
-        container = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.ID, "_pcmap_list_scroll_container"))
-        )
-        li_elements = container.find_elements(By.TAG_NAME, "li")
-
 # iframe 엘리먼트 지정
 def focus_iframe(type):
     driver.switch_to.parent_frame()
@@ -153,7 +112,6 @@ def focus_iframe(type):
 # 위도 경도 좌표 구하는 탭 추가 후 값 return
 def get_lat_lon(input_address):
     lat_lon_url = "https://gps.aply.biz/"
-    #driver.execute_script(f'window.open({lat_lon_url});')
     driver.execute_script("window.open('');")
     time.sleep(1)
 
@@ -180,7 +138,8 @@ def get_lat_lon(input_address):
 
     time.sleep(1)
     
-    driver.close()
+    driver.switch_to.window(driver.window_handles[0])
+
     return lat_value, lon_value
 
 # img_list의 모든 URL에 대해 dict 리스트 구성
@@ -220,7 +179,7 @@ def detail_info():
     latitude = lat_lon_list[0]
     longitude = lat_lon_list[1]
     tags = "test"
-    driver.switch_to.window(driver.window_handles[0])
+    
 
     # review_cn 연산
     visitor_review_txt = subject_ele.find('a', attrs={"href": f"/restaurant/{store_id}/review/visitor"}).get_text() if subject_ele else None
@@ -229,8 +188,12 @@ def detail_info():
     blog_review_cn = re.search(r'\b\d{1,3}(?:,\d{3})*\b', blog_review_txt).group()
     review_cn = int(visitor_review_cn.replace(',', '')) + int(blog_review_cn.replace(',', ''))
 
+    focus_iframe("detail")
+
     # 이미지 리스트 수집
+    WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.CLASS_NAME, 'place_fixed_maintab')))
     tab_list = driver.find_elements(By.CSS_SELECTOR, '.veBoZ')
+    # tab_list = driver.find_elements(By.CSS_SELECTOR, 'flicking-camera')
     for tab in tab_list:
         if tab.text == '사진':
             tab.click()
@@ -338,7 +301,6 @@ def crwl_data():
         driver.find_element(By.XPATH, '//*[@id="searchIframe"]')
         focus_iframe('list')
         page_scroll("Ryr1F")
-        make_store_list()
         
         search_restaurant = driver.find_element(By.XPATH, f'//*[contains(text(),"{KEYWORD}")]')
 
@@ -352,9 +314,9 @@ def crwl_data():
             actions.click(select_restaurant).perform()
 
             # # 상세 정보 크롤링 및 mongo DB에 저장
-            # mongo_detail_info_list = detail_info()[0]
+            mongo_detail_info_list = detail_info()[0]
             # mysql_detail_info_list = detail_info()[1]
-            # conn_mongodb(mongo_detail_info_list)
+            conn_mongodb(mongo_detail_info_list)
 
             # # 상세 정보 크롤링 및 mysql DB에 저장
             # mysql_connection = conn_mysql()
