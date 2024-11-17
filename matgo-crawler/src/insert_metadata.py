@@ -291,41 +291,23 @@ def insert_mysql(connection, detail_info_list):
     finally:
         cursor.close()
 
+def img_classification():
+    return "test"
+
 # 크롤링 시작 함수
 def crwl_data():
     driver.get(url=URL)
-    WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.XPATH, '//*[@id="section_content"]/div'))) 
     try:
+        WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.XPATH, '//*[@id="section_content"]/div'))) 
         driver.find_element(By.XPATH, '//*[@id="searchIframe"]')
         focus_iframe('list')
         page_scroll("Ryr1F")
         
         store_list = driver.find_elements(By.CSS_SELECTOR, '.UEzoS.rTjJo')
-        store_name_list = driver.find_elements(By.CSS_SELECTOR, '.bSoi3.TYaxT')
 
         search_restaurant = driver.find_element(By.XPATH, f'//*[contains(text(),"{KEYWORD}")]')
 
-        if search_restaurant:
-            select_restaurant = search_restaurant.find_element(By.XPATH, '../../../div/div/span')
-            
-            driver.switch_to.parent_frame()
-            WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".SEARCH_MARKER > div")))
-            focus_iframe('list')
-
-            actions.click(select_restaurant).perform()
-
-            # # 상세 정보 크롤링 및 mongo DB에 저장
-            mongo_detail_info_list = detail_info()[0]
-            # mysql_detail_info_list = detail_info()[1]
-            conn_mongodb(mongo_detail_info_list)
-
-            # # 상세 정보 크롤링 및 mysql DB에 저장
-            # mysql_connection = conn_mysql()
-            # insert_mysql(mysql_connection, mysql_detail_info_list)
-
-            # if mysql_connection:
-            #     mysql_connection.close()  # MySQL 연결 종료
-        elif not search_restaurant:
+        if not search_restaurant:
             for store in store_list: # 반복문 수정 필요
                 driver.switch_to.parent_frame()
                 WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".SEARCH_MARKER > div")))
@@ -335,7 +317,7 @@ def crwl_data():
 
                 # 상세 정보 크롤링 및 mongo DB에 저장
                 mongo_detail_info_list = detail_info()[0]
-                mysql_detail_info_list = detail_info()[1]
+                # mysql_detail_info_list = detail_info()[1]
                 conn_mongodb(mongo_detail_info_list)
 
                 # # 상세 정보 크롤링 및 mysql DB에 저장
