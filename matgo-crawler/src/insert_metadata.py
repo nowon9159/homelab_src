@@ -302,7 +302,6 @@ def ai_classification(img_file_uri):
     response = client.label_detection(image=image)
 
     labels = response.lab
-    el_annotations
     print(labels)
 
     label_description = []
