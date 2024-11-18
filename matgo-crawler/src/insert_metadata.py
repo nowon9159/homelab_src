@@ -73,7 +73,6 @@ driver = webdriver.Chrome(options=options)
 actions = ActionChains(driver)
 
 # pymongo client 생성
-#client = MongoClient(mongo_ip, mongo_port) # minikube service mongodb --url
 client = MongoClient(mongo_client_url, tls=True, tlsAllowInvalidCertificates=True)
 
 # 페이지 스크롤
@@ -191,7 +190,6 @@ def detail_info():
     # 이미지 리스트 수집
     WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.CLASS_NAME, 'place_fixed_maintab')))
     tab_list = driver.find_elements(By.CSS_SELECTOR, '.veBoZ')
-    # tab_list = driver.find_elements(By.CSS_SELECTOR, 'flicking-camera')
     for tab in tab_list:
         if tab.text == '사진':
             tab.click()
@@ -202,7 +200,6 @@ def detail_info():
             time.sleep(0.5)
             break
 
-    # img_list의 URL마다 개별 dict 구성
     mongo_detail_info_list = []
     mysql_detail_info_list = []
 
@@ -308,7 +305,7 @@ def crwl_data():
         search_restaurant = driver.find_element(By.XPATH, f'//*[contains(text(),"{KEYWORD}")]')
 
         if not search_restaurant:
-            for store in store_list: # 반복문 수정 필요
+            for store in store_list: 
                 driver.switch_to.parent_frame()
                 WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".SEARCH_MARKER > div")))
                 focus_iframe('list')
