@@ -39,6 +39,9 @@ import json
 import random
 import os
 from dotenv import load_dotenv
+## google cloud vision API
+from google.cloud import vision
+import io
 
 # .env 파일 불러오기
 load_dotenv()
@@ -46,8 +49,11 @@ load_dotenv()
 # 상수
 ## 크롤링
 WAIT_TIMEOUT = random.uniform(10, 11) ## 대기 시간(초)
-KEYWORD = "김치찌개" ## 테스트코드 맥도날드 명동점
+KEYWORD = "맥도날드 명동" ## 테스트코드 맥도날드 명동점
 URL = f"https://map.naver.com/restaurant/list?query={KEYWORD}" # https://pcmap.place.naver.com/place/list?query <-- 해당 url도 가능
+## AI API KEY
+AI_KEY_PATH = os.getenv("AI_KEY_PATH")
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = AI_KEY_PATH
 
 ## DB
 mongo_ip = "127.0.0.1"
@@ -288,8 +294,34 @@ def insert_mysql(connection, detail_info_list):
     finally:
         cursor.close()
 
-def img_classification():
-    return "test"
+def ai_classification(img_file_uri):
+    client = vision.ImageAnnotatorClient()
+
+    image = vision.Image()
+    image.source.image_uri = img_file_uri
+    response = client.label_detection(image=image)
+
+    labels = response.lab
+    el_annotations
+    print(labels)
+
+    label_description = []
+
+    for label in labels:
+        label_description.append(label.description)
+    
+    is_it_food = True if label_description[0].lower() == "food" or label_description[1].lower() == "food" else False
+
+    def ext_category():
+        img_category = ""
+        return img_category
+
+    classification = {
+        "is_it_food": is_it_food,
+        "category": ext_category()
+    }
+
+    return is_it_food
 
 # 크롤링 시작 함수
 def crwl_data():
@@ -332,3 +364,5 @@ try:
     crwl_data()
 except:
     driver.close()
+
+
