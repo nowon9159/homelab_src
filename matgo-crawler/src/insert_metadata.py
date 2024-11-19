@@ -54,6 +54,8 @@ URL = f"https://map.naver.com/restaurant/list?query={KEYWORD}" # https://pcmap.p
 ## AI API KEY
 AI_KEY_PATH = os.getenv("AI_KEY_PATH")
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = AI_KEY_PATH
+LABEL_DESCRIPTION_PATH = "./label_descriptions.txt"
+CLASSIFICATION_IMG_URI = "https://recipe1.ezmember.co.kr/cache/recipe/2015/10/04/97706f91b951817698711adc5f29cf641.jpg"
 
 ## DB
 mongo_ip = "127.0.0.1"
@@ -74,7 +76,7 @@ options = webdriver.ChromeOptions()
 options.add_argument(f'--user-agent={user_agents}')
 options.add_argument("--start-maximized")   # 화면 크게
 options.add_experimental_option("detach", True) # 자동종료 방지(드라이버 유지)
-#options.add_argument("--headless=chrome")
+options.add_argument("--headless=chrome")
 driver = webdriver.Chrome(options=options)
 actions = ActionChains(driver)
 
@@ -231,12 +233,13 @@ def detail_info():
         'store_id': store_id,
         'store_nm': store_nm,
         'tel_no': tel_no,
-        'review_cn': review_cn,
+        'review_cnt': review_cn,
         'star_rate': star_rate,
         'latitude': latitude,
         'longitude': longitude,
         'tags': tags,
-        'category': category
+        'category': category,
+        'store_url': cleaned_url
     }
 
     print("Detail info list 구성 완료:", mongo_detail_info_list)
@@ -270,7 +273,7 @@ def conn_mysql():
 def insert_mysql(connection, detail_info_list):
     cursor = connection.cursor()
     insert_query = """
-    INSERT INTO store_information (store_id, store_nm, address, tel_no, review_cn, star_rate, latitude, longitude, image_url, tags, category) VALUES (%d, %s, %s, %s, %d, %d, %d, %d, %s, %s, %s)
+    INSERT INTO store_information (store_id, store_nm, address, tel_no, review_cnt, star_rate, latitude, longitude, image_url, tags, category, store_url) VALUES (%d, %s, %s, %s, %d, %d, %d, %d, %s, %s, %s)
     """
     try:
         for detail_info in detail_info_list:
@@ -279,13 +282,14 @@ def insert_mysql(connection, detail_info_list):
                 detail_info['store_nm'],
                 detail_info['address'],
                 detail_info['tel_no'],
-                detail_info['review_cn'],
+                detail_info['review_cnt'],
                 detail_info['star_rate'],
                 detail_info['latitude'],
                 detail_info['longitude'],
                 detail_info['image_url'],
                 detail_info['tags'],
-                detail_info['category']
+                detail_info['category'],
+                detail_info['store_url']
             )) 
         connection.commit()  # 변경 사항 커밋
         print("데이터가 MySQL에 성공적으로 삽입되었습니다.")
@@ -294,22 +298,29 @@ def insert_mysql(connection, detail_info_list):
     finally:
         cursor.close()
 
-def ai_classification(img_file_uri):
+def ai_classification(classification_img_uri):
     client = vision.ImageAnnotatorClient()
 
     image = vision.Image()
-    image.source.image_uri = img_file_uri
+    image.source.image_uri = classification_img_uri
     response = client.label_detection(image=image)
 
     labels = response.label_annotations
     print(labels)
 
     label_description = []
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    file_name = "label_descriptions.txt"
+    file_path = os.path.join(current_dir, file_name)
 
     for label in labels:
         label_description.append(label.description)
     
     is_it_food = True if label_description[0].lower() == "food" or label_description[1].lower() == "food" else False
+
+    with open(file_path, "a", encoding="utf-8") as file:
+        for item in label_description:
+            file.write(item + "\n")
 
     def ext_category():
         img_category = ""
@@ -366,7 +377,7 @@ def crwl_data():
     except Exception as e:
         print("목록에서 가게 검색에 실패했습니다:", e)
 
-ai_classification(img_file_uri="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQZfQ0yt4ivKkfZykP1S3Q4jelvnfHmy9vwtA&s")
+ai_classification(classification_img_uri=CLASSIFICATION_IMG_URI)
 
 # test
 try:
