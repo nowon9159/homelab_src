@@ -313,14 +313,16 @@ def ai_classification(img_file_uri):
 
     def ext_category():
         img_category = ""
+
+
         return img_category
 
-    classification = {
+    ai_classification = {
         "is_it_food": is_it_food,
         "category": ext_category()
     }
 
-    return is_it_food
+    return ai_classification
 
 # 크롤링 시작 함수
 def crwl_data():
@@ -336,16 +338,18 @@ def crwl_data():
         search_restaurant = driver.find_element(By.XPATH, f'//*[contains(text(),"{KEYWORD}")]')
 
         if not search_restaurant:
-            for store in store_list: 
+            for index, store in store_list:
                 driver.switch_to.parent_frame()
                 WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".SEARCH_MARKER > div")))
                 focus_iframe('list')
 
                 actions.click(store).perform()
 
-                # 상세 정보 크롤링 및 mongo DB에 저장
+                # DB에 들어갈 json 데이터 생성
                 mongo_detail_info_list = detail_info()[0]
                 # mysql_detail_info_list = detail_info()[1]
+                
+                # 상세 정보 크롤링 및 mongo DB에 저장
                 conn_mongodb(mongo_detail_info_list)
 
                 # # 상세 정보 크롤링 및 mysql DB에 저장
@@ -355,8 +359,14 @@ def crwl_data():
                 # if mysql_connection:
                 #     mysql_connection.close()  # MySQL 연결 종료
 
+                # 가게 5개로 임시 제한
+                if index == 5:
+                    break
+
     except Exception as e:
         print("목록에서 가게 검색에 실패했습니다:", e)
+
+ai_classification(img_file_uri="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQiBj7uT0Y05I9yrrQvvpdH27RsM7DrVpVyag&s")
 
 # test
 try:
