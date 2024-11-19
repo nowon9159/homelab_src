@@ -6,3 +6,12 @@ Cuisine
 Dish
 Natural foods
 Recipe
+
+["Vegetable",
+"Falafel",
+"Produce",
+"Plant",
+"Cuisine",
+"Dish",
+"Natural foods",
+"Recipe",]

@@ -301,7 +301,7 @@ def ai_classification(img_file_uri):
     image.source.image_uri = img_file_uri
     response = client.label_detection(image=image)
 
-    labels = response.lab
+    labels = response.label_annotations
     print(labels)
 
     label_description = []
@@ -366,7 +366,7 @@ def crwl_data():
     except Exception as e:
         print("목록에서 가게 검색에 실패했습니다:", e)
 
-ai_classification(img_file_uri="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQiBj7uT0Y05I9yrrQvvpdH27RsM7DrVpVyag&s")
+ai_classification(img_file_uri="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQZfQ0yt4ivKkfZykP1S3Q4jelvnfHmy9vwtA&s")
 
 # test
 try:
