@@ -1,0 +1,10 @@
+Food
+Bun
+Ingredient
+Staple food
+Fast food
+Recipe
+Baked goods
+Cuisine
+Dish
+Hamburger
