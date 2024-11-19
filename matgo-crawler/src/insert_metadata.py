@@ -1,21 +1,3 @@
-### 기존 place -> map에 iframe으로 붙은 형태
-### place 서치 시 pcmap으로 리다이렉트 되며 정보 조회됨
-### 검색명에 따라 좌측 iframe의 DOM 구조가 바뀜 (list page or detail page )
-
-# TODO List (241111)
-## OpenAI 이용한 이미지 분석
-### 1. OpenAI API를 이용하면 이미지 분석이 가능할 것이다. 해당 SDK를 이용해 이미지 분석 프롬프트를 날려 이미지 분석을 할것.
-## 이미지 url 크롤링 과정 변경
-### 1. 현재는 한 페이지의 url만 긁어 오는데 이미지 분석 과정을 앞에 두고 url의 이미지 분석이 완료되어 음식 사진이라고 판별된 url만 dict에 추가
-### 2. dict에 추가되고 특정 갯수 x 를 넘지 않는 경우 이미지 불러오기 및 url 추가 과정 반복
-## 조건문으로 각 DB insert
-### 1. mysql인 경우 특정 로직, mongodb인 경우 특정 로직으로 나누어 변수 생성 및 dict 생성
-## 리뷰 추가 사항
-### 1. mongodb는 int형, mysql은 str형
-### 2. 리뷰 검색해서 1번째 리뷰 긁어오기, mysql 적재, 추후 mongodb collection으로 옮기기
-## 모듈화
-### 1. mysql 적재, mongodb 적재 로직 나눠서 모듈화
-
 # lib
 ## selenium
 from selenium import webdriver
@@ -49,7 +31,7 @@ load_dotenv()
 # 상수
 ## 크롤링
 WAIT_TIMEOUT = random.uniform(10, 11) ## 대기 시간(초)
-KEYWORD = "맥도날드 명동" ## 테스트코드 맥도날드 명동점
+KEYWORD = "김치찌개" ## 테스트코드 맥도날드 명동점
 URL = f"https://map.naver.com/restaurant/list?query={KEYWORD}" # https://pcmap.place.naver.com/place/list?query <-- 해당 url도 가능
 ## AI API KEY
 AI_KEY_PATH = os.getenv("AI_KEY_PATH")
@@ -64,10 +46,10 @@ mongo_username = os.getenv("MONGO_DB_USERNAME")
 mongo_pw = os.getenv("MONGO_DB_PW")
 mongo_client_url = f"mongodb+srv://{mongo_username}:{mongo_pw}@cluster0.qehwj.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 mysql_ip = "127.0.0.1"
-mysql_port = 40120
-mysql_admin = "test"
-mysql_pw = "1q2w3e4r!"
-mysql_db_name = "matgo"
+mysql_port = 41191
+mysql_admin = os.getenv("MYSQL_ADMIN")
+mysql_pw = os.getenv("MYSQL_PW")
+mysql_db_name = os.getenv("MYSQL_DB_NAME")
 
 # 드라이버 실행 및 옵션 정의
 ua = UserAgent(platforms="pc", browsers="chrome")
@@ -76,7 +58,7 @@ options = webdriver.ChromeOptions()
 options.add_argument(f'--user-agent={user_agents}')
 options.add_argument("--start-maximized")   # 화면 크게
 options.add_experimental_option("detach", True) # 자동종료 방지(드라이버 유지)
-options.add_argument("--headless=chrome")
+#options.add_argument("--headless=chrome")
 driver = webdriver.Chrome(options=options)
 actions = ActionChains(driver)
 
@@ -123,16 +105,15 @@ def get_lat_lon(input_address):
     driver.switch_to.window(driver.window_handles[-1])  #새로 연 탭으로 이동
     driver.get(url=lat_lon_url)
 
-    address = driver.find_element(By.XPATH, '//*[@id="gtco-header2"]/div/div[3]/div[2]/div[1]/input')
-
+    address = driver.find_element(By.XPATH, '//*[@id="gtco-header2"]/div/div[3]/div[2]/div[1]')# 주소 인풋박스 div 찾기
     address.send_keys(input_address)
 
     driver.find_element(By.XPATH, '//*[@id="btnGetGpsByAddress"]').click()
 
     wait = WebDriverWait(driver, 5)
 
-    lat = driver.find_element(By.XPATH, '//*[@id="gtco-header2"]/div/div[3]/div[1]/div[1]/input')
-    lon = driver.find_element(By.XPATH, '//*[@id="gtco-header2"]/div/div[3]/div[1]/div[2]/input')
+    lat = driver.find_element(By.XPATH, '/html/body/div[3]/header/div/div[3]/div[1]/div[1]/input')
+    lon = driver.find_element(By.XPATH, '/html/body/div[3]/header/div/div[3]/div[1]/div[2]/input')
 
     wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="askModal"]/div/div/div[2]'))) # 모달 생성 대기
 
@@ -161,7 +142,8 @@ def detail_info():
     result_page = driver.page_source
     soup = BeautifulSoup(result_page, 'html.parser')
     
-    detail_ele = soup.find('div', class_='PIbes')
+    #detail_ele = soup.find('div', class_='PIbes') data-nclicks-area-code
+    detail_ele = soup.find('div', attrs={'data-nclicks-area-code': 'btp'})
     subject_ele = soup.find('div', class_='zD5Nm undefined')
 
     # 가게 상세 정보 추출
@@ -170,7 +152,7 @@ def detail_info():
     url_path_match = re.search(r'place/(\d+)', url_path)
     store_id = url_path_match.group(1) if url_path_match else None
     # mongo
-    detail_addr = detail_ele.find('span', class_='LDgIH').get_text() if detail_ele else None
+    detail_addr = detail_ele.find('span', clas`s_='LDgIH').get_text() if detail_ele else None
     current_status = detail_ele.find('em').get_text() if detail_ele else None
     time_ele = soup.find('time', {'aria-hidden': 'true'}).get_text() if detail_ele else None
     strt_time, end_time = (time_ele, None) if current_status == '영업 종료' else (None, time_ele)
@@ -344,40 +326,42 @@ def crwl_data():
         focus_iframe('list')
         page_scroll("Ryr1F")
         
-        store_list = driver.find_elements(By.CSS_SELECTOR, '.UEzoS.rTjJo')
+        store_list = driver.find_elements(By.CSS_SELECTOR, '#_pcmap_list_scroll_container > ul > li')
 
-        search_restaurant = driver.find_element(By.XPATH, f'//*[contains(text(),"{KEYWORD}")]')
+        #search_restaurant = driver.find_element(By.XPATH, f'//*[contains(text(),"{KEYWORD}")]')
 
-        if not search_restaurant:
-            for index, store in store_list:
-                driver.switch_to.parent_frame()
-                WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".SEARCH_MARKER > div")))
-                focus_iframe('list')
+        #if not search_restaurant:
+        for index, store in enumerate(store_list, start=1):
+            driver.switch_to.parent_frame()
 
-                actions.click(store).perform()
+            WebDriverWait(driver, WAIT_TIMEOUT).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, ".SEARCH_MARKER > div"))
+                    )
+            
+            focus_iframe('list')
 
-                # DB에 들어갈 json 데이터 생성
-                mongo_detail_info_list = detail_info()[0]
-                # mysql_detail_info_list = detail_info()[1]
-                
-                # 상세 정보 크롤링 및 mongo DB에 저장
-                conn_mongodb(mongo_detail_info_list)
+            actions.click(store).perform()
 
-                # # 상세 정보 크롤링 및 mysql DB에 저장
-                # mysql_connection = conn_mysql()
-                # insert_mysql(mysql_connection, mysql_detail_info_list)
+            # DB에 들어갈 json 데이터 생성
+            mongo_detail_info_list = detail_info()[0]
+            mysql_detail_info_list = detail_info()[1]
+            
+            # 상세 정보 크롤링 및 mongo DB에 저장
+            conn_mongodb(mongo_detail_info_list)
 
-                # if mysql_connection:
-                #     mysql_connection.close()  # MySQL 연결 종료
+            # # 상세 정보 크롤링 및 mysql DB에 저장
+            mysql_connection = conn_mysql()
+            insert_mysql(mysql_connection, mysql_detail_info_list)
 
-                # 가게 5개로 임시 제한
-                if index == 5:
-                    break
+            if mysql_connection:
+                mysql_connection.close()  # MySQL 연결 종료
+
+            # 가게 5개로 임시 제한
+            if index == 5:
+                break
 
     except Exception as e:
         print("목록에서 가게 검색에 실패했습니다:", e)
-
-ai_classification(classification_img_uri=CLASSIFICATION_IMG_URI)
 
 # test
 try:
