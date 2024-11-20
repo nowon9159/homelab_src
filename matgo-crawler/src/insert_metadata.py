@@ -133,6 +133,8 @@ def get_lat_lon(input_address):
 def detail_info():
     focus_iframe('detail')
 
+    tab_list = driver.find_elements(By.CLASS_NAME, 'veBoZ')
+
     # 현재 URL 가져오기 및 처리
     current_url = driver.current_url
     parsed_url = urlparse(current_url)
