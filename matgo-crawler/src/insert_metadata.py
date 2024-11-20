@@ -46,7 +46,7 @@ mongo_username = os.getenv("MONGO_DB_USERNAME")
 mongo_pw = os.getenv("MONGO_DB_PW")
 mongo_client_url = f"mongodb+srv://{mongo_username}:{mongo_pw}@cluster0.qehwj.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 mysql_ip = "127.0.0.1"
-mysql_port = 41191
+mysql_port = 35127
 mysql_admin = os.getenv("MYSQL_ADMIN")
 mysql_pw = os.getenv("MYSQL_PW")
 mysql_db_name = os.getenv("MYSQL_DB_NAME")
@@ -105,8 +105,8 @@ def get_lat_lon(input_address):
     driver.switch_to.window(driver.window_handles[-1])  #새로 연 탭으로 이동
     driver.get(url=lat_lon_url)
 
-    address = driver.find_element(By.XPATH, '//*[@id="gtco-header2"]/div/div[3]/div[2]/div[1]')# 주소 인풋박스 div 찾기
-    address.send_keys(input_address)
+    address_box = driver.find_element(By.XPATH, '//*[@id="gtco-header2"]/div/div[3]/div[2]/div[1]/input')# 주소 인풋박스 div 찾기
+    address_box.send_keys(input_address)
 
     driver.find_element(By.XPATH, '//*[@id="btnGetGpsByAddress"]').click()
 
@@ -124,14 +124,23 @@ def get_lat_lon(input_address):
 
     time.sleep(1)
     
+    driver.close()
     driver.switch_to.window(driver.window_handles[0])
 
     return lat_value, lon_value
 
+def get_all_tab_list():
+    return "test"
+
+
 # img_list의 모든 URL에 대해 dict 리스트 구성
 def detail_info():
     focus_iframe('detail')
-    time.sleep(random.uniform(2, 3))
+
+    tab_list = driver.find_elements(By.CLASS_NAME, 'veBoZ')
+    for home in tab_list:
+        if home.text == '홈':
+            home.click()
 
     # 현재 URL 가져오기 및 처리
     current_url = driver.current_url
@@ -142,8 +151,7 @@ def detail_info():
     result_page = driver.page_source
     soup = BeautifulSoup(result_page, 'html.parser')
     
-    #detail_ele = soup.find('div', class_='PIbes') data-nclicks-area-code
-    detail_ele = soup.find('div', attrs={'data-nclicks-area-code': 'btp'})
+    detail_ele = soup.find('div', class_='PIbes')
     subject_ele = soup.find('div', class_='zD5Nm undefined')
 
     # 가게 상세 정보 추출
@@ -152,7 +160,7 @@ def detail_info():
     url_path_match = re.search(r'place/(\d+)', url_path)
     store_id = url_path_match.group(1) if url_path_match else None
     # mongo
-    detail_addr = detail_ele.find('span', clas`s_='LDgIH').get_text() if detail_ele else None
+    detail_addr = detail_ele.find('span', class_='LDgIH').get_text() if detail_ele else None
     current_status = detail_ele.find('em').get_text() if detail_ele else None
     time_ele = soup.find('time', {'aria-hidden': 'true'}).get_text() if detail_ele else None
     strt_time, end_time = (time_ele, None) if current_status == '영업 종료' else (None, time_ele)
@@ -179,16 +187,41 @@ def detail_info():
 
     # 이미지 리스트 수집
     WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.CLASS_NAME, 'place_fixed_maintab')))
-    tab_list = driver.find_elements(By.CSS_SELECTOR, '.veBoZ')
+    WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.CSS_SELECTOR, '.veBoZ')))
+
     for tab in tab_list:
         if tab.text == '사진':
-            tab.click()
-            WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.CLASS_NAME, 'wzrbN')))
-            time.sleep(random.uniform(2, 3))
-            img_elems = driver.find_elements(By.CLASS_NAME, 'wzrbN')
-            img_list = [img.find_element(By.XPATH, './/a/img').get_attribute('src') for img in img_elems]
-            time.sleep(0.5)
-            break
+            while True:
+                try:
+                    actions = ActionChains(driver)
+                    actions.move_to_element_with_offset(tab, 5, 5).click().perform()
+
+                    tab.click()
+                    WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.CLASS_NAME, 'wzrbN')))
+                    time.sleep(random.uniform(2, 3))
+                    img_elems = driver.find_elements(By.CLASS_NAME, 'wzrbN')
+                    img_list = [img.find_element(By.XPATH, './/a/img').get_attribute('src') for img in img_elems]
+                    time.sleep(0.5)
+                    break
+                except Exception as e:
+                    try:
+                        right_button = WebDriverWait(driver, WAIT_TIMEOUT).until(
+                            EC.presence_of_element_located((By.CLASS_NAME, 'ZCqf_'))
+                        )
+                        span_tag = right_button.find_element(By.CLASS_NAME, 'nK_aH')
+                        
+                        actions = ActionChains(driver)
+                        actions.move_to_element(span_tag).click().perform()
+
+                        flicking_camera = WebDriverWait(driver, WAIT_TIMEOUT).until(
+                            EC.presence_of_element_located((By.CLASS_NAME, 'flicking-camera'))
+                        )
+                        transform_style = flicking_camera.get_attribute('style')
+                        print(f"Transform style: {transform_style}")
+
+                        time.sleep(1)
+                    except Exception as button_error:
+                        print(f"오른쪽 버튼 클릭 실패: {button_error}")
 
     mongo_detail_info_list = []
     mysql_detail_info_list = []
@@ -326,7 +359,7 @@ def crwl_data():
         focus_iframe('list')
         page_scroll("Ryr1F")
         
-        store_list = driver.find_elements(By.CSS_SELECTOR, '#_pcmap_list_scroll_container > ul > li')
+        store_list = driver.find_elements(By.CLASS_NAME, 'TYaxT')
 
         #search_restaurant = driver.find_element(By.XPATH, f'//*[contains(text(),"{KEYWORD}")]')
 
@@ -334,11 +367,11 @@ def crwl_data():
         for index, store in enumerate(store_list, start=1):
             driver.switch_to.parent_frame()
 
-            WebDriverWait(driver, WAIT_TIMEOUT).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, ".SEARCH_MARKER > div"))
-                    )
+            WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".SEARCH_MARKER > div")))
             
             focus_iframe('list')
+
+            WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.XPATH, '//*[@id="section_content"]/div')))
 
             actions.click(store).perform()
 
