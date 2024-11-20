@@ -129,18 +129,9 @@ def get_lat_lon(input_address):
 
     return lat_value, lon_value
 
-def get_all_tab_list():
-    return "test"
-
-
 # img_list의 모든 URL에 대해 dict 리스트 구성
 def detail_info():
     focus_iframe('detail')
-
-    tab_list = driver.find_elements(By.CLASS_NAME, 'veBoZ')
-    for home in tab_list:
-        if home.text == '홈':
-            home.click()
 
     # 현재 URL 가져오기 및 처리
     current_url = driver.current_url
