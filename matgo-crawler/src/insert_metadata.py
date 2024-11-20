@@ -46,7 +46,7 @@ mongo_username = os.getenv("MONGO_DB_USERNAME")
 mongo_pw = os.getenv("MONGO_DB_PW")
 mongo_client_url = f"mongodb+srv://{mongo_username}:{mongo_pw}@cluster0.qehwj.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 mysql_ip = "127.0.0.1"
-mysql_port = 35127
+mysql_port = 37585
 mysql_admin = os.getenv("MYSQL_ADMIN")
 mysql_pw = os.getenv("MYSQL_PW")
 mysql_db_name = os.getenv("MYSQL_DB_NAME")
@@ -102,15 +102,16 @@ def get_lat_lon(input_address):
     driver.execute_script("window.open('');")
     time.sleep(1)
 
+    wait = WebDriverWait(driver, 5)
+
     driver.switch_to.window(driver.window_handles[-1])  #새로 연 탭으로 이동
     driver.get(url=lat_lon_url)
 
+    wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="gtco-header2"]/div/div[3]/div[2]/div[1]/input'))) # address input box 생성 대기
     address_box = driver.find_element(By.XPATH, '//*[@id="gtco-header2"]/div/div[3]/div[2]/div[1]/input')# 주소 인풋박스 div 찾기
     address_box.send_keys(input_address)
 
     driver.find_element(By.XPATH, '//*[@id="btnGetGpsByAddress"]').click()
-
-    wait = WebDriverWait(driver, 5)
 
     lat = driver.find_element(By.XPATH, '/html/body/div[3]/header/div/div[3]/div[1]/div[1]/input')
     lon = driver.find_element(By.XPATH, '/html/body/div[3]/header/div/div[3]/div[1]/div[2]/input')
@@ -153,7 +154,6 @@ def detail_info():
     url_path_match = re.search(r'place/(\d+)', url_path)
     store_id = url_path_match.group(1) if url_path_match else None
     # mongo
-    detail_addr = detail_ele.find('span', class_='LDgIH').get_text() if detail_ele else None
     current_status = detail_ele.find('em').get_text() if detail_ele else None
     time_ele = soup.find('time', {'aria-hidden': 'true'}).get_text() if detail_ele else None
     strt_time, end_time = (time_ele, None) if current_status == '영업 종료' else (None, time_ele)
@@ -225,7 +225,7 @@ def detail_info():
     for img_url in img_list:
         mongo_detail_info = {
             'img_url': img_url,
-            'detail_addr': detail_addr,
+            'detail_addr': address,
             'store_id': store_id,
             'current_status': current_status,
             'strt_time': strt_time,
@@ -245,13 +245,15 @@ def detail_info():
         'star_rate': star_rate,
         'latitude': latitude,
         'longitude': longitude,
-        'tags': tags,
+        'address': address,
         'category': category,
-        'store_url': cleaned_url
+        'naver_url': cleaned_url
     }
 
+    mysql_detail_info_list.append(mysql_detail_info)
+
     print("Detail info list 구성 완료:", mongo_detail_info_list)
-    print("Detail info list 구성 완료:", mysql_detail_info)
+    print("Detail info list 구성 완료:", mysql_detail_info_list)
     return mongo_detail_info_list, mysql_detail_info_list
 
 # MongoDB에 데이터 삽입 함수
@@ -281,11 +283,13 @@ def conn_mysql():
 def insert_mysql(connection, detail_info_list):
     cursor = connection.cursor()
     insert_query = """
-    INSERT INTO store_information (store_id, store_nm, address, tel_no, review_cnt, star_rate, latitude, longitude, image_url, tags, category, store_url) VALUES (%d, %s, %s, %s, %d, %d, %d, %d, %s, %s, %s)
+    INSERT INTO store_information (store_id, store_nm, address, tel_no, review_cnt, star_rate, latitude, longitude, img_url, category, naver_url) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     """
     try:
         for detail_info in detail_info_list:
-            cursor.execute(insert_query, (
+            img_url_str = ", ".join(detail_info['img_url'])
+
+            tuple_detail_info = (
                 detail_info['store_id'],
                 detail_info['store_nm'],
                 detail_info['address'],
@@ -294,11 +298,11 @@ def insert_mysql(connection, detail_info_list):
                 detail_info['star_rate'],
                 detail_info['latitude'],
                 detail_info['longitude'],
-                detail_info['image_url'],
-                detail_info['tags'],
+                img_url_str,
                 detail_info['category'],
-                detail_info['store_url']
-            )) 
+                detail_info['naver_url']
+            )
+            cursor.execute(insert_query, tuple_detail_info)
         connection.commit()  # 변경 사항 커밋
         print("데이터가 MySQL에 성공적으로 삽입되었습니다.")
     except Error as e:
@@ -364,13 +368,13 @@ def crwl_data():
             
             focus_iframe('list')
 
-            WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.XPATH, '//*[@id="section_content"]/div')))
-
             actions.click(store).perform()
 
+            deatil_info_list = detail_info()
+
             # DB에 들어갈 json 데이터 생성
-            mongo_detail_info_list = detail_info()[0]
-            mysql_detail_info_list = detail_info()[1]
+            mongo_detail_info_list = deatil_info_list[0]
+            mysql_detail_info_list = deatil_info_list[1]
             
             # 상세 정보 크롤링 및 mongo DB에 저장
             conn_mongodb(mongo_detail_info_list)
@@ -392,7 +396,7 @@ def crwl_data():
 # test
 try:
     crwl_data()
-except:
+finally:
     driver.close()
 
 
