@@ -1,3 +1,4 @@
 *.env
 .env
 ferrous-gate*.json
+settings.py

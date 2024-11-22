@@ -46,7 +46,7 @@ mongo_username = os.getenv("MONGO_DB_USERNAME")
 mongo_pw = os.getenv("MONGO_DB_PW")
 mongo_client_url = f"mongodb+srv://{mongo_username}:{mongo_pw}@cluster0.qehwj.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 mysql_ip = "127.0.0.1"
-mysql_port = 37585
+mysql_port = 46149
 mysql_admin = os.getenv("MYSQL_ADMIN")
 mysql_pw = os.getenv("MYSQL_PW")
 mysql_db_name = os.getenv("MYSQL_DB_NAME")
