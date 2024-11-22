@@ -1,0 +1,39 @@
+version: "3.8"
+services:
+  mongo:
+    image: 
+    volumes:
+      - 
+    restart: 
+    environment:
+      - name=value
+    networks:
+      - networkName
+    ports:
+      - 
+  frontend:
+    image: 
+    volumes:
+      - 
+    restart: 
+    environment:
+      - name=value
+    networks:
+      - networkName
+    ports:
+      - 
+  backend:
+    image: 
+    volumes:
+      - 
+    restart: 
+    environment:
+      - name=value
+    networks:
+      - networkName
+    ports:
+      - 
+  
+volumes:
+networks:
+  
