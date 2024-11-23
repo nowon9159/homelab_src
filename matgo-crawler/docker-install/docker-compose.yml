@@ -36,9 +36,21 @@ services:
     networks:
       - matgo
     ports:
+      - 37017:27017
+  gitlab:
+    image: mongodb/mongodb-community-server:latest
+    volumes:
       - 
-  
-  
+    restart: 
+    environment:
+      - name=value
+    networks:
+      - matgo
+    ports:
+      - 31080:80
+        31443:443
+        31022:22
+
 volumes:
 
 networks:

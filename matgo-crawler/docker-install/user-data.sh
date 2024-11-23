@@ -36,3 +36,4 @@ sudo curl -SL https://github.com/docker/compose/releases/download/v2.30.3/docker
 sudo chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
 
 sudo docker compose version
+
