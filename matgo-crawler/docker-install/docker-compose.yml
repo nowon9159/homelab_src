@@ -1,10 +1,10 @@
 version: "3.8"
 services:
   frontend:
-    image: 
+    image: # 이미지 정의 필요
     volumes:
-      - 
-    restart: 
+      - ./frontend/app/logs:/app/logs
+    restart: unless-stopped
     environment:
       - name=value
     networks:
@@ -12,10 +12,10 @@ services:
     ports:
       - 30080:80
   backend:
-    image: 
+    image: # 이미지 정의 필요
     volumes:
-      - 
-    restart: 
+      - ./backend/app/logs:/app/logs
+    restart: unless-stopped
     environment:
       - MONGO_DB_USERNAME=${MONGO_DB_USERNAME}
         MONGO_DB_PW=${MONGO_DB_PW}
@@ -29,8 +29,8 @@ services:
   mongodb:
     image: mongodb/mongodb-community-server:latest
     volumes:
-      - 
-    restart: 
+      - ./mongodb/data:/data/db
+    restart: unless-stopped 
     environment:
       - name=value
     networks:
@@ -38,10 +38,10 @@ services:
     ports:
       - 37017:27017
   gitlab:
-    image: mongodb/mongodb-community-server:latest
+    image: gitlab/gitlab-ce:latest
     volumes:
-      - 
-    restart: 
+      - ./gitlab/logs:/app/logs
+    restart: unless-stopped 
     environment:
       - name=value
     networks:
@@ -50,9 +50,6 @@ services:
       - 31080:80
         31443:443
         31022:22
-
-volumes:
-
 networks:
   matgo:
     driver: bridge

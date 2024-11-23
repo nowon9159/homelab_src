@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# sudo -i
-# cd ~
+# sudo
+# su nowon9159
 
 apt update -y
 apt upgrade -y
@@ -37,3 +37,7 @@ sudo chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
 
 sudo docker compose version
 
+# docker project 생성
+
+
+sudo mkdir -r /home/dev/docker-compose/matgo
