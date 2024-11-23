@@ -1,6 +1,12 @@
 #!/bin/bash
 
-# Docker 설치
+# sudo -i
+# cd ~
+
+apt update -y
+apt upgrade -y
+
+# Docker Engine 설치
 for pkg in docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc; do sudo apt-get remove $pkg; done
 
 ## Add Docker's official GPG key:
@@ -17,4 +23,16 @@ echo \
   sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 sudo apt-get update
 
-sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin
+
+# Docker Compose plugin 설치
+sudo apt-get update
+sudo apt-get install docker-compose-plugin
+
+sudo DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
+sudo mkdir -p $DOCKER_CONFIG/cli-plugins
+sudo curl -SL https://github.com/docker/compose/releases/download/v2.30.3/docker-compose-linux-x86_64 -o $DOCKER_CONFIG/cli-plugins/docker-compose
+
+sudo chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+
+sudo docker compose version

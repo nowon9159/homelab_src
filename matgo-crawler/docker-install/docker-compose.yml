@@ -1,16 +1,5 @@
 version: "3.8"
 services:
-  mongodb:
-    image: mongodb/mongodb-community-server:latest
-    volumes:
-      - 
-    restart: 
-    environment:
-      - name=value
-    networks:
-      - matgo
-    ports:
-      - 
   frontend:
     image: 
     volumes:
@@ -21,7 +10,7 @@ services:
     networks:
       - matgo
     ports:
-      - 
+      - 30080:80
   backend:
     image: 
     volumes:
@@ -36,7 +25,19 @@ services:
     networks:
       - matgo
     ports:
+      - 38080:8080
+  mongodb:
+    image: mongodb/mongodb-community-server:latest
+    volumes:
       - 
+    restart: 
+    environment:
+      - name=value
+    networks:
+      - matgo
+    ports:
+      - 
+  
   
 volumes:
 
