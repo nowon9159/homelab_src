@@ -1,38 +1,39 @@
 version: "3.8"
 services:
-  frontend:
-    image: # 이미지 정의 필요
-    volumes:
-      - ./frontend/app/logs:/app/logs
-    restart: unless-stopped
-    environment:
-      - name=value
-    networks:
-      - matgo
-    ports:
-      - 30080:80
-  backend:
-    image: # 이미지 정의 필요
-    volumes:
-      - ./backend/app/logs:/app/logs
-    restart: unless-stopped
-    environment:
-      - MONGO_DB_USERNAME=${MONGO_DB_USERNAME}
-        MONGO_DB_PW=${MONGO_DB_PW}
-        MONGO_DB_IP=${MONGO_DB_IP}
-        MONGO_DB_NAME=${MONGO_DB_NAME}
-        MONGO_DB_PORT=${MONGO_DB_PORT}
-    networks:
-      - matgo
-    ports:
-      - 38080:8080
+  # frontend:
+  #   image: # 이미지 정의 필요
+  #   volumes:
+  #     - ./frontend/app/logs:/app/logs
+  #   restart: unless-stopped
+  #   environment:
+  #     - name=value
+  #   networks:
+  #     - matgo
+  #   ports:
+  #     - 30080:80
+  # backend:
+  #   image: # 이미지 정의 필요
+  #   volumes:
+  #     - ./backend/app/logs:/app/logs
+  #   restart: unless-stopped
+  #   environment:
+  #     - MONGO_DB_USERNAME=${MONGO_DB_USERNAME}
+  #       MONGO_DB_PW=${MONGO_DB_PW}
+  #       MONGO_DB_IP=${MONGO_DB_IP}
+  #       MONGO_DB_NAME=${MONGO_DB_NAME}
+  #       MONGO_DB_PORT=${MONGO_DB_PORT}
+  #   networks:
+  #     - matgo
+  #   ports:
+  #     - 38080:8080
   mongodb:
     image: mongodb/mongodb-community-server:latest
     volumes:
       - ./mongodb/data:/data/db
     restart: unless-stopped 
     environment:
-      - name=value
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+        MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
     networks:
       - matgo
     ports:
@@ -40,8 +41,9 @@ services:
   gitlab:
     image: gitlab/gitlab-ce:latest
     volumes:
-      - ./gitlab/logs:/app/logs
-    restart: unless-stopped 
+      - ./gitlab/log:/var/log/gitlab
+        ./gitlab/opt:/var/opt/gitlab
+    restart: unless-stopped
     environment:
       - name=value
     networks:

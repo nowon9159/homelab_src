@@ -37,7 +37,11 @@ sudo chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
 
 sudo docker compose version
 
-# docker project 생성
+# docker project, docker dir 생성
+sudo mkdir -r /app/docker-compose/matgo
+sudo mkdir -r /app/docker-compose/matgo/frontend
+sudo mkdir -r /app/docker-compose/matgo/backend
+sudo mkdir -r /app/docker-compose/matgo/mongodb
+sudo mkdir -r /app/docker-compose/matgo/gitlab
 
-
-sudo mkdir -r /home/dev/docker-compose/matgo
+# 
