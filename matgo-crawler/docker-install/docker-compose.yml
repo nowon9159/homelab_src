@@ -1,4 +1,3 @@
-version: "3.8"
 services:
   # frontend:
   #   image: # 이미지 정의 필요
@@ -10,7 +9,7 @@ services:
   #   networks:
   #     - matgo
   #   ports:
-  #     - 30080:80
+  #     - "30080:80"
   # backend:
   #   image: # 이미지 정의 필요
   #   volumes:
@@ -25,7 +24,7 @@ services:
   #   networks:
   #     - matgo
   #   ports:
-  #     - 38080:8080
+  #     - "38080:8080"
   mongodb:
     image: mongodb/mongodb-community-server:latest
     volumes:
@@ -36,7 +35,7 @@ services:
     networks:
       - matgo
     ports:
-      - 37017:27017
+      - "37017:27017"
   gitlab:
     image: gitlab/gitlab-ce:latest
     volumes:
@@ -48,9 +47,9 @@ services:
     networks:
       - matgo
     ports:
-      - 31080:80
-        31443:443
-        31022:22
+      - "31080:80"
+      - "31443:443"
+      - "31022:22"
 networks:
   matgo:
     driver: bridge
