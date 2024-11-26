@@ -25,6 +25,17 @@ services:
   #     - matgo
   #   ports:
   #     - "38080:8080"
+  mongodb:
+    image: mongodb/mongodb-community-server:latest
+    volumes:
+      - ./mongodb/data:/data/db
+    restart: unless-stopped
+    env_file:
+      - ./mongodb.env
+    networks:
+      - matgo
+    ports:
+      - "37017:27017"
   gitlab:
     image: gitlab/gitlab-ce:latest
     volumes:
