@@ -136,7 +136,7 @@ class Crawler:
         self.driver.close()
         self.driver.switch_to.window(self.driver.window_handles[0])
 
-        return lat_value, lon_value
+        return [lat_value, lon_value]
 
     def run_crawling(self, keyword):
         """전체 크롤링 작업 실행"""
