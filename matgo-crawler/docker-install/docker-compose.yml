@@ -30,10 +30,9 @@ services:
     image: mongodb/mongodb-community-server:latest
     volumes:
       - ./mongodb/data:/data/db
-    restart: unless-stopped 
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
-        MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+    restart: unless-stopped
+    env_file:
+      - ./mongodb.env
     networks:
       - matgo
     ports:
