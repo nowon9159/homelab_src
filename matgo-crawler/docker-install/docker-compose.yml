@@ -1,6 +1,6 @@
 services:
   # frontend:
-  #   image: # 이미지 정의 필요
+  #   image: matgo-frontend:0.0.1
   #   volumes:
   #     - ./frontend/app/logs:/app/logs
   #   restart: unless-stopped
@@ -11,7 +11,7 @@ services:
   #   ports:
   #     - "30080:80"
   # backend:
-  #   image: # 이미지 정의 필요
+  #   image: matgo-backend:0.0.1
   #   volumes:
   #     - ./backend/app/logs:/app/logs
   #   restart: unless-stopped
