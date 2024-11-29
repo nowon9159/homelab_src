@@ -21,9 +21,15 @@ import json
 import random
 import os
 from dotenv import load_dotenv
+import requests
 ## google cloud vision API
-from google.cloud import vision
-import io
+# from google.cloud import vision
+# import io
+## Hugging face
+from transformers import CLIPProcessor, CLIPModel, AutoProcessor, AutoModelForImageClassification
+from datasets import load_dataset
+from PIL import Image
+
 
 # .env 파일 불러오기
 load_dotenv()
@@ -118,17 +124,21 @@ def get_lat_lon(input_address):
 
     wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="askModal"]/div/div/div[2]'))) # 모달 생성 대기
 
-    time.sleep(3)
+    time.sleep(random.uniform(3, 4))
+
 
     lat_value = lat.get_attribute("value")
     lon_value = lon.get_attribute("value")
 
-    time.sleep(1)
+    time.sleep(random.uniform(1, 2))
     
     driver.close()
     driver.switch_to.window(driver.window_handles[0])
 
-    return lat_value, lon_value
+    return [lat_value, lon_value]
+
+def get_simple_review():
+    pass
 
 # img_list의 모든 URL에 대해 dict 리스트 구성
 def detail_info():
@@ -219,45 +229,49 @@ def detail_info():
                     except Exception as button_error:
                         print(f"오른쪽 버튼 클릭 실패: {button_error}")
 
-    mongo_detail_info_list = []
-    mysql_detail_info_list = []
+    image_meta_list = []
+    store_information_list = []
 
-    mongo_detail_info = {}
-    mysql_detail_info = {}
-    
+    image_meta = {}
+    store_information = {}
+
     for img_url in img_list:
-        mongo_detail_info = {
-            'img_url': img_url,
-            'detail_addr': address,
+        image_meta = {
             'store_id': store_id,
-            'current_status': current_status,
-            'strt_time': strt_time,
-            'end_time': end_time,
-            'naver_url': cleaned_url,
-            'img_thumbs_url': img_list[0]  # 첫 번째 이미지 썸네일로 설정
+            'img_url': img_url,
+            'tags': tags
         }
         time.sleep(0.2)
-        mongo_detail_info_list.append(mongo_detail_info)
+        image_meta_list.append(image_meta)
     
-    mysql_detail_info = {
-        'img_url': img_list,
+    store_information = {
         'store_id': store_id,
         'store_nm': store_nm,
+        'address': address,
         'tel_no': tel_no,
         'review_cnt': review_cn,
         'star_rate': star_rate,
-        'latitude': latitude,
-        'longitude': longitude,
-        'address': address,
+        'open_info': {
+            'status': current_status,
+            'start_time': strt_time,
+            'end_time': end_time 
+        },
+        'location': {
+            'type': 'Point',
+            'coordinates': [latitude, longitude]
+        },
         'category': category,
-        'naver_url': cleaned_url
+        'image_url': img_list,
+        'naver_url': cleaned_url,
+        'simple_review': ,
+        'famous_cnt':
     }
 
-    mysql_detail_info_list.append(mysql_detail_info)
+    store_information_list.append(store_information)
 
-    print("Detail info list 구성 완료:", mongo_detail_info_list)
-    print("Detail info list 구성 완료:", mysql_detail_info_list)
-    return mongo_detail_info_list, mysql_detail_info_list
+    print("Image meta list 구성 완료:", image_meta_list)
+    print("Detail info list 구성 완료:", store_information_list)
+    return image_meta_list, store_information_list
 
 # MongoDB에 데이터 삽입 함수
 def conn_mongodb(detail_info_list):
@@ -350,6 +364,9 @@ def ai_classification(classification_img_uri):
 
     return ai_classification
 
+def hugging_face_export_label():
+
+
 # 크롤링 시작 함수
 def crwl_data():
     driver.get(url=URL)
@@ -376,18 +393,19 @@ def crwl_data():
             deatil_info_list = detail_info()
 
             # DB에 들어갈 json 데이터 생성
-            mongo_detail_info_list = deatil_info_list[0]
-            mysql_detail_info_list = deatil_info_list[1]
+            image_meta_list = deatil_info_list[0]
+            store_information_list = deatil_info_list[1]
             
             # 상세 정보 크롤링 및 mongo DB에 저장
-            conn_mongodb(mongo_detail_info_list)
+            conn_mongodb(image_meta_list)
+            conn_mongodb(store_information_list)
 
             # # 상세 정보 크롤링 및 mysql DB에 저장
-            mysql_connection = conn_mysql()
-            insert_mysql(mysql_connection, mysql_detail_info_list)
+            # mysql_connection = conn_mysql()
+            # insert_mysql(mysql_connection, store_information_list)
 
-            if mysql_connection:
-                mysql_connection.close()  # MySQL 연결 종료
+            # if mysql_connection:
+            #     mysql_connection.close()  # MySQL 연결 종료
 
             # 가게 5개로 임시 제한
             if index == 5:
