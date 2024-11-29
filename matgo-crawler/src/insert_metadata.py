@@ -40,10 +40,6 @@ WAIT_TIMEOUT = random.uniform(10, 11) ## 대기 시간(초)
 KEYWORD = "김치찌개" ## 테스트코드 맥도날드 명동점
 URL = f"https://map.naver.com/restaurant/list?query={KEYWORD}" # https://pcmap.place.naver.com/place/list?query <-- 해당 url도 가능
 ## AI API KEY
-AI_KEY_PATH = os.getenv("AI_KEY_PATH")
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = AI_KEY_PATH
-LABEL_DESCRIPTION_PATH = "./label_descriptions.txt"
-CLASSIFICATION_IMG_URI = "https://recipe1.ezmember.co.kr/cache/recipe/2015/10/04/97706f91b951817698711adc5f29cf641.jpg"
 
 ## DB
 mongo_ip = "127.0.0.1"
@@ -51,11 +47,11 @@ mongo_port = 40441
 mongo_username = os.getenv("MONGO_DB_USERNAME")
 mongo_pw = os.getenv("MONGO_DB_PW")
 mongo_client_url = f"mongodb+srv://{mongo_username}:{mongo_pw}@cluster0.qehwj.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
-mysql_ip = "127.0.0.1"
-mysql_port = 46149
-mysql_admin = os.getenv("MYSQL_ADMIN")
-mysql_pw = os.getenv("MYSQL_PW")
-mysql_db_name = os.getenv("MYSQL_DB_NAME")
+# mysql_ip = "127.0.0.1"
+# mysql_port = 46149
+# mysql_admin = os.getenv("MYSQL_ADMIN")
+# mysql_pw = os.getenv("MYSQL_PW")
+# mysql_db_name = os.getenv("MYSQL_DB_NAME")
 
 # 드라이버 실행 및 옵션 정의
 ua = UserAgent(platforms="pc", browsers="chrome")
@@ -144,6 +140,7 @@ def get_simple_review():
 def detail_info():
     focus_iframe('detail')
 
+    
     tab_list = driver.find_elements(By.CLASS_NAME, 'veBoZ')
 
     # 현재 URL 가져오기 및 처리
@@ -190,11 +187,46 @@ def detail_info():
 
     focus_iframe("detail")
 
-    # 이미지 리스트 수집
+    # 이미지 리스트, 리뷰 리스트 수집
     WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.CLASS_NAME, 'place_fixed_maintab')))
     WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.CSS_SELECTOR, '.veBoZ')))
 
+    img_list = []
+    review_list = []
+
     for tab in tab_list:
+        if tab.text == '리뷰':
+            while True:
+                try:
+                    actions = ActionChains(driver)
+                    actions.move_to_element_with_offset(tab, 5, 5).click().perform()
+
+                    tab.click()
+                    WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.CLASS_NAME, 'pui__vn15t2')))
+                    time.sleep(random.uniform(2, 3))
+                    review_elems = driver.find_elements(By.CLASS_NAME, 'pui__vn15t2')
+                    review_list = [review.text for review in review_elems]
+                    time.sleep(0.5)
+                    break
+                except Exception as e:
+                    try:
+                        right_button = WebDriverWait(driver, WAIT_TIMEOUT).until(
+                            EC.presence_of_element_located((By.CLASS_NAME, 'ZCqf_'))
+                        )
+                        span_tag = right_button.find_element(By.CLASS_NAME, 'nK_aH')
+                        
+                        actions = ActionChains(driver)
+                        actions.move_to_element(span_tag).click().perform()
+
+                        flicking_camera = WebDriverWait(driver, WAIT_TIMEOUT).until(
+                            EC.presence_of_element_located((By.CLASS_NAME, 'flicking-camera'))
+                        )
+                        transform_style = flicking_camera.get_attribute('style')
+                        print(f"Transform style: {transform_style}")
+
+                        time.sleep(1)
+                    except Exception as button_error:
+                        print(f"오른쪽 버튼 클릭 실패: {button_error}")
         if tab.text == '사진':
             while True:
                 try:
@@ -262,8 +294,8 @@ def detail_info():
         'category': category,
         'image_url': img_list,
         'naver_url': cleaned_url,
-        'simple_review': ,
-        'famous_cnt':
+        'simple_review': review_list[0],
+        'famous_cnt': ""
     }
 
     store_information_list.append(store_information)
@@ -281,50 +313,50 @@ def conn_mongodb(detail_info_list):
     except Exception as e:
         print("MongoDB에 데이터 삽입 중 오류 발생:", e)
 
-def conn_mysql():
-    connection = None
-    try:
-        connection = mysql.connector.connect(
-            host=mysql_ip,
-            port=mysql_port,
-            user=mysql_admin,
-            passwd=mysql_pw,
-            database=mysql_db_name
-        )
-        print("MySQL 데이터베이스에 연결됨.")
-    except Error as e:
-        print(f"MySQL 데이터베이스 연결 오류 발생: '{e}'")
-    return connection
+# def conn_mysql():
+#     connection = None
+#     try:
+#         connection = mysql.connector.connect(
+#             host=mysql_ip,
+#             port=mysql_port,
+#             user=mysql_admin,
+#             passwd=mysql_pw,
+#             database=mysql_db_name
+#         )
+#         print("MySQL 데이터베이스에 연결됨.")
+#     except Error as e:
+#         print(f"MySQL 데이터베이스 연결 오류 발생: '{e}'")
+#     return connection
 
-def insert_mysql(connection, detail_info_list):
-    cursor = connection.cursor()
-    insert_query = """
-    INSERT INTO store_information (store_id, store_nm, address, tel_no, review_cnt, star_rate, latitude, longitude, img_url, category, naver_url) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-    """
-    try:
-        for detail_info in detail_info_list:
-            img_url_str = ", ".join(detail_info['img_url'])
+# def insert_mysql(connection, detail_info_list):
+#     cursor = connection.cursor()
+#     insert_query = """
+#     INSERT INTO store_information (store_id, store_nm, address, tel_no, review_cnt, star_rate, latitude, longitude, img_url, category, naver_url) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+#     """
+#     try:
+#         for detail_info in detail_info_list:
+#             img_url_str = ", ".join(detail_info['img_url'])
 
-            tuple_detail_info = (
-                detail_info['store_id'],
-                detail_info['store_nm'],
-                detail_info['address'],
-                detail_info['tel_no'],
-                detail_info['review_cnt'],
-                detail_info['star_rate'],
-                detail_info['latitude'],
-                detail_info['longitude'],
-                img_url_str,
-                detail_info['category'],
-                detail_info['naver_url']
-            )
-            cursor.execute(insert_query, tuple_detail_info)
-        connection.commit()  # 변경 사항 커밋
-        print("데이터가 MySQL에 성공적으로 삽입되었습니다.")
-    except Error as e:
-        print(f"MySQL에 데이터 삽입 중 오류 발생: \n '{e}'")
-    finally:
-        cursor.close()
+#             tuple_detail_info = (
+#                 detail_info['store_id'],
+#                 detail_info['store_nm'],
+#                 detail_info['address'],
+#                 detail_info['tel_no'],
+#                 detail_info['review_cnt'],
+#                 detail_info['star_rate'],
+#                 detail_info['latitude'],
+#                 detail_info['longitude'],
+#                 img_url_str,
+#                 detail_info['category'],
+#                 detail_info['naver_url']
+#             )
+#             cursor.execute(insert_query, tuple_detail_info)
+#         connection.commit()  # 변경 사항 커밋
+#         print("데이터가 MySQL에 성공적으로 삽입되었습니다.")
+#     except Error as e:
+#         print(f"MySQL에 데이터 삽입 중 오류 발생: \n '{e}'")
+#     finally:
+#         cursor.close()
 
 # def ai_classification(classification_img_uri):
 #     client = vision.ImageAnnotatorClient()
@@ -371,6 +403,7 @@ def hugging_face_export_label():
 def crwl_data():
     driver.get(url=URL)
     try:
+        time.sleep(random.uniform(1, 2))
         WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.XPATH, '//*[@id="section_content"]/div')))
         driver.find_element(By.XPATH, '//*[@id="searchIframe"]')
         focus_iframe('list')
