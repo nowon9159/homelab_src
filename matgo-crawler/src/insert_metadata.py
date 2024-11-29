@@ -141,7 +141,7 @@ def get_simple_review():
     pass
 
 # img_list의 모든 URL에 대해 dict 리스트 구성
-def detail_info():
+def detail_info( -> ):
     focus_iframe('detail')
 
     tab_list = driver.find_elements(By.CLASS_NAME, 'veBoZ')
@@ -327,42 +327,42 @@ def insert_mysql(connection, detail_info_list):
     finally:
         cursor.close()
 
-def ai_classification(classification_img_uri):
-    client = vision.ImageAnnotatorClient()
+# def ai_classification(classification_img_uri):
+#     client = vision.ImageAnnotatorClient()
 
-    image = vision.Image()
-    image.source.image_uri = classification_img_uri
-    response = client.label_detection(image=image)
+#     image = vision.Image()
+#     image.source.image_uri = classification_img_uri
+#     response = client.label_detection(image=image)
 
-    labels = response.label_annotations
-    print(labels)
+#     labels = response.label_annotations
+#     print(labels)
 
-    label_description = []
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    file_name = "label_descriptions.txt"
-    file_path = os.path.join(current_dir, file_name)
+#     label_description = []
+#     current_dir = os.path.dirname(os.path.abspath(__file__))
+#     file_name = "label_descriptions.txt"
+#     file_path = os.path.join(current_dir, file_name)
 
-    for label in labels:
-        label_description.append(label.description)
+#     for label in labels:
+#         label_description.append(label.description)
     
-    is_it_food = True if label_description[0].lower() == "food" or label_description[1].lower() == "food" else False
+#     is_it_food = True if label_description[0].lower() == "food" or label_description[1].lower() == "food" else False
 
-    with open(file_path, "a", encoding="utf-8") as file:
-        for item in label_description:
-            file.write(item + "\n")
+#     with open(file_path, "a", encoding="utf-8") as file:
+#         for item in label_description:
+#             file.write(item + "\n")
 
-    def ext_category():
-        img_category = ""
+#     def ext_category():
+#         img_category = ""
 
 
-        return img_category
+#         return img_category
 
-    ai_classification = {
-        "is_it_food": is_it_food,
-        "category": ext_category()
-    }
+#     ai_classification = {
+#         "is_it_food": is_it_food,
+#         "category": ext_category()
+#     }
 
-    return ai_classification
+#     return ai_classification
 
 def hugging_face_export_label():
 
