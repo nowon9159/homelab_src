@@ -44,4 +44,4 @@ sudo mkdir -p /app/docker-compose/matgo/backend
 sudo mkdir -p /app/docker-compose/matgo/mongodb
 sudo mkdir -p /app/docker-compose/matgo/gitlab
 
-# 
+# docker compose
