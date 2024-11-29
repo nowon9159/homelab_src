@@ -176,6 +176,9 @@ def detail_info():
     blog_review_cn = re.search(r'\b\d{1,3}(?:,\d{3})*\b', blog_review_txt).group()
     review_cn = int(visitor_review_cn.replace(',', '')) + int(blog_review_cn.replace(',', ''))
 
+    # 인기순 정렬 기준 계산
+    
+
     focus_iframe("detail")
 
     # 이미지 리스트 수집
