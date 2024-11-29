@@ -141,7 +141,7 @@ def get_simple_review():
     pass
 
 # img_list의 모든 URL에 대해 dict 리스트 구성
-def detail_info( -> ):
+def detail_info():
     focus_iframe('detail')
 
     tab_list = driver.find_elements(By.CLASS_NAME, 'veBoZ')
@@ -177,7 +177,6 @@ def detail_info( -> ):
     latitude = lat_lon_list[0]
     longitude = lat_lon_list[1]
     tags = "test"
-    
 
     # review_cn 연산
     visitor_review_txt = subject_ele.find('a', attrs={"href": f"/restaurant/{store_id}/review/visitor"}).get_text() if subject_ele else None
@@ -365,13 +364,14 @@ def insert_mysql(connection, detail_info_list):
 #     return ai_classification
 
 def hugging_face_export_label():
+    pass
 
 
 # 크롤링 시작 함수
 def crwl_data():
     driver.get(url=URL)
     try:
-        WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.XPATH, '//*[@id="section_content"]/div'))) 
+        WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.XPATH, '//*[@id="section_content"]/div')))
         driver.find_element(By.XPATH, '//*[@id="searchIframe"]')
         focus_iframe('list')
         page_scroll("Ryr1F")
