@@ -26,9 +26,9 @@ services:
   #   ports:
   #     - "38080:8080"
   mongodb:
-    image: bitnami/mongodb:7.0.15
+    image: mongo:7.0.15
     volumes:
-      - ./mongodb/data:/data/db
+      - ./mongodb/data:/data
     restart: unless-stopped
     env_file:
       - ./mongodb.env
