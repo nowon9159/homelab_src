@@ -226,7 +226,7 @@ def detail_info():
 
                         time.sleep(1)
                     except Exception as button_error:
-                        print(f"오른쪽 버튼 클릭 실패: {button_error}")
+                        print(f"리뷰 리스트 생성 실패: {button_error}")
         if tab.text == '사진':
             while True:
                 try:
@@ -262,7 +262,7 @@ def detail_info():
 
                         time.sleep(1)
                     except Exception as button_error:
-                        print(f"오른쪽 버튼 클릭 실패: {button_error}")
+                        print(f"사진 리스트 생성 실패: {button_error}")
 
     image_meta_list = []
     store_information_list = []
@@ -400,19 +400,20 @@ def conn_mongodb(detail_info_list):
 #     return ai_classification
 
 def ai_classification_food(url):
-    model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14")
-    processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14")
+    if url == True:
+        model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14")
+        processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14")
 
-    image = Image.open(requests.get(url, stream=True).raw)
+        image = Image.open(requests.get(url, stream=True).raw)
 
-    inputs = processor(text=["a photo of a food"], images=image, return_tensors="pt", padding=True)
+        inputs = processor(text=["a photo of a food"], images=image, return_tensors="pt", padding=True)
 
-    outputs = model(**inputs)
-    logits_per_image = outputs.logits_per_image # this is the image-text similarity score
-    probs = logits_per_image.softmax(dim=1) # we can take the softmax to get the label probabilities
-
-    return probs
-
+        outputs = model(**inputs)
+        logits_per_image = outputs.logits_per_image # this is the image-text similarity score
+        probs = logits_per_image.softmax(dim=1) # we can take the softmax to get the label probabilities
+        return probs
+    else:
+        raise("이미지 url 확인에 실패했습니다.")
 
 # 크롤링 시작 함수
 def crwl_data():
@@ -460,7 +461,7 @@ def crwl_data():
                 break
 
     except Exception as e:
-        print("목록에서 가게 검색에 실패했습니다:", e)
+        print("크롤링 작업이 실패했습니다:", e)
 
 # test
 try:
