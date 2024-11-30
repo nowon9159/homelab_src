@@ -1,4 +1,4 @@
-# lib
+# lib 
 ## selenium
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -29,6 +29,7 @@ import requests
 from transformers import CLIPProcessor, CLIPModel, AutoProcessor, AutoModelForImageClassification
 from datasets import load_dataset
 from PIL import Image
+
 
 
 # .env 파일 불러오기
@@ -133,8 +134,6 @@ def get_lat_lon(input_address):
 
     return [lat_value, lon_value]
 
-def get_simple_review():
-    pass
 
 # img_list의 모든 URL에 대해 dict 리스트 구성
 def detail_info():
@@ -173,7 +172,8 @@ def detail_info():
     lat_lon_list = get_lat_lon(input_address=address)
     latitude = lat_lon_list[0]
     longitude = lat_lon_list[1]
-    tags = "test"
+    tags = ""
+
 
     # review_cn 연산
     visitor_review_txt = subject_ele.find('a', attrs={"href": f"/restaurant/{store_id}/review/visitor"}).get_text() if subject_ele else None
@@ -237,7 +237,11 @@ def detail_info():
                     WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.CLASS_NAME, 'wzrbN')))
                     time.sleep(random.uniform(2, 3))
                     img_elems = driver.find_elements(By.CLASS_NAME, 'wzrbN')
-                    img_list = [img.find_element(By.XPATH, './/a/img').get_attribute('src') for img in img_elems]
+                    for img in img_elems:
+                        img_url = img.find_element(By.XPATH, './/a/img').get_attribute('src')
+                        image_probs = ai_classification_food(url=img_url)
+                        if image_probs > 0.90:
+                            img_list.append(img_url)
                     time.sleep(0.5)
                     break
                 except Exception as e:
@@ -395,8 +399,19 @@ def conn_mongodb(detail_info_list):
 
 #     return ai_classification
 
-def hugging_face_export_label():
-    pass
+def ai_classification_food(url):
+    model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14")
+    processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14")
+
+    image = Image.open(requests.get(url, stream=True).raw)
+
+    inputs = processor(text=["a photo of a food"], images=image, return_tensors="pt", padding=True)
+
+    outputs = model(**inputs)
+    logits_per_image = outputs.logits_per_image # this is the image-text similarity score
+    probs = logits_per_image.softmax(dim=1) # we can take the softmax to get the label probabilities
+
+    return probs
 
 
 # 크롤링 시작 함수
