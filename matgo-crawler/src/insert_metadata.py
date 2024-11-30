@@ -134,11 +134,29 @@ def get_lat_lon(input_address):
 
     return [lat_value, lon_value]
 
+def ai_classification_food(url):
+    if url == True:
+        model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14")
+        processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14")
+
+        image = Image.open(requests.get(url, stream=True).raw)
+
+        inputs = processor(text=["a photo of a food"], images=image, return_tensors="pt", padding=True)
+
+        outputs = model(**inputs)
+        logits_per_image = outputs.logits_per_image # this is the image-text similarity score
+        probs = logits_per_image.softmax(dim=1) # we can take the softmax to get the label probabilities
+        return probs
+    else:
+        raise("이미지 url 확인에 실패했습니다.")
+
+def calc_famous_cnt(star, review):
+    famous_cnt = star * 0.01 + review * 0.0002
+    return famous_cnt
 
 # img_list의 모든 URL에 대해 dict 리스트 구성
 def detail_info():
     focus_iframe('detail')
-
     
     tab_list = driver.find_elements(By.CLASS_NAME, 'veBoZ')
 
@@ -174,7 +192,6 @@ def detail_info():
     longitude = lat_lon_list[1]
     tags = ""
 
-
     # review_cn 연산
     visitor_review_txt = subject_ele.find('a', attrs={"href": f"/restaurant/{store_id}/review/visitor"}).get_text() if subject_ele else None
     blog_review_txt = subject_ele.find('a', attrs={"href": f"/restaurant/{store_id}/review/ugc"}).get_text() if subject_ele else None
@@ -182,12 +199,8 @@ def detail_info():
     blog_review_cn = re.search(r'\b\d{1,3}(?:,\d{3})*\b', blog_review_txt).group()
     review_cn = int(visitor_review_cn.replace(',', '')) + int(blog_review_cn.replace(',', ''))
 
-    # 인기순 정렬 기준 계산
-    
-
-    focus_iframe("detail")
-
     # 이미지 리스트, 리뷰 리스트 수집
+    focus_iframe("detail")
     WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.CLASS_NAME, 'place_fixed_maintab')))
     WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.CSS_SELECTOR, '.veBoZ')))
 
@@ -203,9 +216,13 @@ def detail_info():
 
                     tab.click()
                     WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.CLASS_NAME, 'pui__vn15t2')))
-                    time.sleep(random.uniform(2, 3))
+                    time.sleep(random.uniform(3, 4))
                     review_elems = driver.find_elements(By.CLASS_NAME, 'pui__vn15t2')
-                    review_list = [review.text for review in review_elems]
+
+                    for review in review_elems:
+                        review_text = review.text
+                        cleaned_review_text = review_text.replace("\n", " ").replace("더보기","").strip()
+                        review_list.append(cleaned_review_text)
                     time.sleep(0.5)
                     break
                 except Exception as e:
@@ -299,7 +316,7 @@ def detail_info():
         'image_url': img_list,
         'naver_url': cleaned_url,
         'simple_review': review_list[0],
-        'famous_cnt': ""
+        'famous_cnt': calc_famous_cnt(star=star_rate, review=review_cn)
     }
 
     store_information_list.append(store_information)
@@ -399,21 +416,7 @@ def conn_mongodb(detail_info_list):
 
 #     return ai_classification
 
-def ai_classification_food(url):
-    if url == True:
-        model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14")
-        processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14")
 
-        image = Image.open(requests.get(url, stream=True).raw)
-
-        inputs = processor(text=["a photo of a food"], images=image, return_tensors="pt", padding=True)
-
-        outputs = model(**inputs)
-        logits_per_image = outputs.logits_per_image # this is the image-text similarity score
-        probs = logits_per_image.softmax(dim=1) # we can take the softmax to get the label probabilities
-        return probs
-    else:
-        raise("이미지 url 확인에 실패했습니다.")
 
 # 크롤링 시작 함수
 def crwl_data():
@@ -459,7 +462,6 @@ def crwl_data():
             # 가게 5개로 임시 제한
             if index == 5:
                 break
-
     except Exception as e:
         print("크롤링 작업이 실패했습니다:", e)
 
