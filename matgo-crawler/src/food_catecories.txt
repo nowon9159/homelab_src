@@ -1,5 +1,1 @@
-pasta|lunch,dinner,cupl
-jjigae|dinner,lunch,group
-fish|lunch,solo,cupl
-salad|lunch,dinner,solo
-Tonkatsu|dinner,cupl,solo,lunch
+김치찌개|

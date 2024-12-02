@@ -144,6 +144,7 @@ def ai_classification_food(url):
         inputs = processor(text=["a photo of a food"], images=image, return_tensors="pt", padding=True)
 
         outputs = model(**inputs)
+        print(outputs)
         logits_per_image = outputs.logits_per_image # this is the image-text similarity score
         probs = logits_per_image.softmax(dim=1) # we can take the softmax to get the label probabilities
         return probs
@@ -206,6 +207,7 @@ def detail_info():
 
     img_list = []
     review_list = []
+    tags_list = []
 
     for tab in tab_list:
         if tab.text == '리뷰':
@@ -223,6 +225,15 @@ def detail_info():
                         review_text = review.text
                         cleaned_review_text = review_text.replace("\n", " ").replace("더보기","").strip()
                         review_list.append(cleaned_review_text)
+
+                    tag_elems = driver.find_elements(By.CLASS_NAME,'pui__V8F9nN')
+
+                    for tag in tag_elems:
+                        tag_text = tag.text
+                        tags_list.append(tag_text)
+                    
+                    tags = ",".join(tags_list)
+
                     time.sleep(0.5)
                     break
                 except Exception as e:
