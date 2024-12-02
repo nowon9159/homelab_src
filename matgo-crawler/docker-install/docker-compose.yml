@@ -32,6 +32,10 @@ services:
     restart: unless-stopped
     env_file:
       - ./mongodb.env
+    # environment:
+    #   - MONGODB_INITDB_DATABASE
+    #     MONGODB_INITDB_ROOT_USERNAME
+    #     MONGODB_INITDB_ROOT_PASSWORD
     networks:
       - matgo
     ports:
