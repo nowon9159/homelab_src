@@ -64,9 +64,10 @@ actions = ActionChains(driver)
 # pymongo client 생성
 client = MongoClient(mongo_client_url, tls=True, tlsAllowInvalidCertificates=True)
 
-# 모델 및 프로세서 로드
+# AI 이미지 분석
 model = AutoModel.from_pretrained("Bingsu/clip-vit-large-patch14-ko")
 processor = AutoProcessor.from_pretrained("Bingsu/clip-vit-large-patch14-ko")
+
 
 # 페이지 스크롤
 def page_scroll(class_name):
@@ -300,10 +301,9 @@ def detail_info():
                     img_elems = driver.find_elements(By.CLASS_NAME, 'wzrbN')
                     for img in img_elems:
                         img_url = img.find_element(By.XPATH, './/a/img').get_attribute('src')
-                        is_img = ai_classification_food(url=img_url)
+                        is_img = ai_classification_food(url=img_url, text_query_file=)
                         if is_img != False:
                             img_list.append(img_url)
-                        # ai_create_category(url=img_url)
                     time.sleep(0.5)
                     break
                 except Exception as e:
@@ -423,45 +423,6 @@ def conn_mongodb(detail_info_list):
 #         print(f"MySQL에 데이터 삽입 중 오류 발생: \n '{e}'")
 #     finally:
 #         cursor.close()
-
-# def ai_classification(classification_img_uri):
-#     client = vision.ImageAnnotatorClient()
-
-#     image = vision.Image()
-#     image.source.image_uri = classification_img_uri
-#     response = client.label_detection(image=image)
-
-#     labels = response.label_annotations
-#     print(labels)
-
-#     label_description = []
-#     current_dir = os.path.dirname(os.path.abspath(__file__))
-#     file_name = "label_descriptions.txt"
-#     file_path = os.path.join(current_dir, file_name)
-
-#     for label in labels:
-#         label_description.append(label.description)
-    
-#     is_it_food = True if label_description[0].lower() == "food" or label_description[1].lower() == "food" else False
-
-#     with open(file_path, "a", encoding="utf-8") as file:
-#         for item in label_description:
-#             file.write(item + "\n")
-
-#     def ext_category():
-#         img_category = ""
-
-
-#         return img_category
-
-#     ai_classification = {
-#         "is_it_food": is_it_food,
-#         "category": ext_category()
-#     }
-
-#     return ai_classification
-
-
 
 # 크롤링 시작 함수
 def crwl_data():
