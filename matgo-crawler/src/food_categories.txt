@@ -1,9 +1,10 @@
-김치찌개|
-갈비찜|
-짜장면|
-된장찌개|
-순두부찌개|
-수육|
+# solo, cupl, dssrt, lunch, dinner, night, fmly, group
+김치찌개|["group", "lunch", "dinner"]
+갈비찜|["group", "lunch", "dinner", "fmly"]
+짜장면|["solo", "cupl", "lunch", "dinner", "fmly"]
+된장찌개|["solo", "lunch", "dinner", "fmly"]
+순두부찌개|["solo", "lunch", "dinner", "fmly"]
+수육|["dinner", "fmly", "night", "group"]
 부대찌개|
 비빔밥|
 제육볶음|
