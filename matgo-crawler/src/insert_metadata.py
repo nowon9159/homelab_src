@@ -22,15 +22,11 @@ import random
 import os
 from dotenv import load_dotenv
 import requests
-## google cloud vision API
-# from google.cloud import vision
-# import io
-## Hugging face
-from transformers import CLIPProcessor, CLIPModel, AutoProcessor, AutoModelForImageClassification
-from datasets import load_dataset
+
+## AI
+from transformers import AutoModel, AutoProcessor
 from PIL import Image
-
-
+import torch
 
 # .env 파일 불러오기
 load_dotenv()
@@ -38,7 +34,7 @@ load_dotenv()
 # 상수
 ## 크롤링
 WAIT_TIMEOUT = random.uniform(10, 11) ## 대기 시간(초)
-KEYWORD = "김치찌개" ## 테스트코드 맥도날드 명동점
+KEYWORD = "양천향교역 김치찌개" ## 테스트코드 맥도날드 명동점
 URL = f"https://map.naver.com/restaurant/list?query={KEYWORD}" # https://pcmap.place.naver.com/place/list?query <-- 해당 url도 가능
 ## AI API KEY
 
@@ -67,6 +63,10 @@ actions = ActionChains(driver)
 
 # pymongo client 생성
 client = MongoClient(mongo_client_url, tls=True, tlsAllowInvalidCertificates=True)
+
+# 모델 및 프로세서 로드
+model = AutoModel.from_pretrained("Bingsu/clip-vit-large-patch14-ko")
+processor = AutoProcessor.from_pretrained("Bingsu/clip-vit-large-patch14-ko")
 
 # 페이지 스크롤
 def page_scroll(class_name):
@@ -134,22 +134,55 @@ def get_lat_lon(input_address):
 
     return [lat_value, lon_value]
 
-def ai_classification_food(url):
-    if url == True:
-        model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14")
-        processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14")
+def extract_text_queries(file_path):
+    try:
+        with open(file_path, "r", encoding="utf-8") as file:
+            # 파일에서 줄 단위로 읽기
+            lines = file.readlines()
+            # 각 줄에서 '|' 앞부분만 추출
+            text_query = [line.split("|")[0].strip() for line in lines if "|" in line]
+            return text_query
+    except FileNotFoundError:
+        raise ValueError(f"파일을 찾을 수 없습니다: {file_path}")
+    except Exception as e:
+        raise ValueError(f"에러 발생: {e}")
 
+def ai_classification_food(url, text_query_file):
+    if url != None:
         image = Image.open(requests.get(url, stream=True).raw)
 
-        inputs = processor(text=["a photo of a food"], images=image, return_tensors="pt", padding=True)
+        # 텍스트 쿼리 지정
+        text_query = extract_text_queries(text_query_file)
 
-        outputs = model(**inputs)
-        print(outputs)
-        logits_per_image = outputs.logits_per_image # this is the image-text similarity score
-        probs = logits_per_image.softmax(dim=1) # we can take the softmax to get the label probabilities
-        return probs
+        # 입력 데이터 준비
+        inputs = processor(text=text_query, images=image, return_tensors="pt", padding=True)
+
+        with torch.inference_mode():
+            outputs = model(**inputs)
+
+        # 이미지와 텍스트 간의 유사도 계산
+        logits_per_image = outputs.logits_per_image
+        probs = logits_per_image.softmax(dim=1)
+
+        # 확률값에서 가장 큰 값을 찾음
+        max_prob, pred_idx = torch.max(probs[0], dim=0)
+        pred_text = text_query[pred_idx]
+
+        # 조건에 따라 결과 반환
+        if max_prob < 0.89:
+            print("이미지 분석 취소: 신뢰도 높은 결과 없음")
+            result = False
+        else:
+            print(f"이미지 분석 성공: {pred_text} (확률: {max_prob.item():.4f})")
+            result = {"pred_text": pred_text, "probability": max_prob.item()}
+            return result
     else:
-        raise("이미지 url 확인에 실패했습니다.")
+        raise ValueError("이미지 url 확인에 실패했습니다.")
+
+def check_category(classification_value):
+    
+    pass
+
 
 def calc_famous_cnt(star, review):
     famous_cnt = star * 0.01 + review * 0.0002
@@ -267,9 +300,10 @@ def detail_info():
                     img_elems = driver.find_elements(By.CLASS_NAME, 'wzrbN')
                     for img in img_elems:
                         img_url = img.find_element(By.XPATH, './/a/img').get_attribute('src')
-                        image_probs = ai_classification_food(url=img_url)
-                        if image_probs > 0.90:
+                        is_img = ai_classification_food(url=img_url)
+                        if is_img != False:
                             img_list.append(img_url)
+                        # ai_create_category(url=img_url)
                     time.sleep(0.5)
                     break
                 except Exception as e:
@@ -441,9 +475,6 @@ def crwl_data():
         
         store_list = driver.find_elements(By.CLASS_NAME, 'TYaxT')
 
-        #search_restaurant = driver.find_element(By.XPATH, f'//*[contains(text(),"{KEYWORD}")]')
-
-        #if not search_restaurant:
         for index, store in enumerate(store_list, start=1):
             driver.switch_to.parent_frame()
 
