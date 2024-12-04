@@ -67,7 +67,7 @@ client = MongoClient(mongo_client_url, tls=True, tlsAllowInvalidCertificates=Tru
 # AI 이미지 분석
 model = AutoModel.from_pretrained("Bingsu/clip-vit-large-patch14-ko")
 processor = AutoProcessor.from_pretrained("Bingsu/clip-vit-large-patch14-ko")
-
+text_query_file = "food_categories.txt"
 
 # 페이지 스크롤
 def page_scroll(class_name):
@@ -137,7 +137,7 @@ def get_lat_lon(input_address):
 
 def extract_text_queries(file_path):
     try:
-        with open(file_path, "r", encoding="utf-8") as file:
+        with open(text_query_file, "r", encoding="utf-8") as file:
             # 파일에서 줄 단위로 읽기
             lines = file.readlines()
             # 각 줄에서 '|' 앞부분만 추출
@@ -148,12 +148,14 @@ def extract_text_queries(file_path):
     except Exception as e:
         raise ValueError(f"에러 발생: {e}")
 
-def ai_classification_food(url, text_query_file):
+def extract_category(pred_text):
+    # 텍스트 값 받아서 카테고리 분류
+
+    pass
+
+def ai_classification_food(url, text_query):
     if url != None:
         image = Image.open(requests.get(url, stream=True).raw)
-
-        # 텍스트 쿼리 지정
-        text_query = extract_text_queries(text_query_file)
 
         # 입력 데이터 준비
         inputs = processor(text=text_query, images=image, return_tensors="pt", padding=True)
@@ -175,15 +177,10 @@ def ai_classification_food(url, text_query_file):
             result = False
         else:
             print(f"이미지 분석 성공: {pred_text} (확률: {max_prob.item():.4f})")
-            result = {"pred_text": pred_text, "probability": max_prob.item()}
-            return result
+            result = {"pred_text": pred_text, "probability": max_prob.item(), "category": extract_category(pred_text=pred_text)}
+        return result
     else:
         raise ValueError("이미지 url 확인에 실패했습니다.")
-
-def check_category(classification_value):
-    
-    pass
-
 
 def calc_famous_cnt(star, review):
     famous_cnt = star * 0.01 + review * 0.0002
@@ -299,9 +296,17 @@ def detail_info():
                     WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.CLASS_NAME, 'wzrbN')))
                     time.sleep(random.uniform(2, 3))
                     img_elems = driver.find_elements(By.CLASS_NAME, 'wzrbN')
+
+                    with open(text_query_file, "r", encoding="utf-8") as file:
+                        # 파일에서 줄 단위로 읽기
+                        lines = file.readlines()
+                        # 각 줄에서 '|' 앞부분만 추출
+                        text_query = [line.split("|")[0].strip() for line in lines if "|" in line]
+                        
+
                     for img in img_elems:
                         img_url = img.find_element(By.XPATH, './/a/img').get_attribute('src')
-                        is_img = ai_classification_food(url=img_url, text_query_file=)
+                        is_img = ai_classification_food(url=img_url, text_query=text_query)
                         if is_img != False:
                             img_list.append(img_url)
                     time.sleep(0.5)
