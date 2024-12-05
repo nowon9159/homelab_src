@@ -34,7 +34,7 @@ load_dotenv()
 # 상수
 ## 크롤링
 WAIT_TIMEOUT = random.uniform(10, 11) ## 대기 시간(초)
-KEYWORD = "양천향교역 김치찌개" ## 테스트코드 맥도날드 명동점
+KEYWORD = "양천향교역 된장찌개" ## 테스트코드 맥도날드 명동점
 URL = f"https://map.naver.com/restaurant/list?query={KEYWORD}" # https://pcmap.place.naver.com/place/list?query <-- 해당 url도 가능
 ## AI API KEY
 
@@ -56,7 +56,7 @@ user_agents = ua.random
 options = webdriver.ChromeOptions()
 options.add_argument(f'--user-agent={user_agents}')
 options.add_argument("--start-maximized")   # 화면 크게
-options.add_experimental_option("detach", True) # 자동종료 방지(드라이버 유지)
+#options.add_experimental_option("detach", True) # 자동종료 방지(드라이버 유지)
 #options.add_argument("--headless=chrome")
 driver = webdriver.Chrome(options=options)
 actions = ActionChains(driver)
@@ -68,7 +68,6 @@ client = MongoClient(mongo_client_url, tls=True, tlsAllowInvalidCertificates=Tru
 TEXT_QUERY_FILE = "./matgo-crawler/src/food_categories.txt"
 model = AutoModel.from_pretrained("Bingsu/clip-vit-large-patch14-ko")
 processor = AutoProcessor.from_pretrained("Bingsu/clip-vit-large-patch14-ko")
-
 
 # 페이지 스크롤
 def page_scroll(class_name):
@@ -140,8 +139,6 @@ def ai_classification_food(url, text_query):
     if url != None:
         image = Image.open(requests.get(url, stream=True).raw)
         
-
-
         # 입력 데이터 준비
         inputs = processor(text=text_query, images=image, return_tensors="pt", padding=True)
 
@@ -219,8 +216,7 @@ def detail_info():
 
     # 이미지 리스트, 리뷰 리스트 수집
     focus_iframe("detail")
-    WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.CLASS_NAME, 'place_fixed_maintab')))
-    WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.CSS_SELECTOR, '.veBoZ')))
+    WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.CLASS_NAME, 'CB8aP')))
 
     img_list = []
     review_list = []
@@ -231,11 +227,10 @@ def detail_info():
             while True:
                 try:
                     actions = ActionChains(driver)
-                    actions.move_to_element_with_offset(tab, 5, 5).click().perform()
+                    #actions.move_to_element_with_offset(tab, 5, 5).click().perform()
 
                     tab.click()
                     WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.CLASS_NAME, 'pui__vn15t2')))
-                    time.sleep(random.uniform(3, 4))
                     review_elems = driver.find_elements(By.CLASS_NAME, 'pui__vn15t2')
 
                     for review in review_elems:
@@ -276,11 +271,9 @@ def detail_info():
             while True:
                 try:
                     actions = ActionChains(driver)
-                    actions.move_to_element_with_offset(tab, 5, 5).click().perform()
-
+                    #actions.move_to_element_with_offset(tab, 5, 5).click().perform()
                     tab.click()
                     WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.CLASS_NAME, 'wzrbN')))
-                    time.sleep(random.uniform(2, 3))
                     img_elems = driver.find_elements(By.CLASS_NAME, 'wzrbN')
 
                     text_category_dict = {}
@@ -311,10 +304,9 @@ def detail_info():
                             category_text = ai_classification_result['pred_text']
                             img_list.append(img_url)
 
-                        categories = text_category_dict[category_text]
-                        for category in categories:
-                            category_list.append(category)
-
+                            categories = text_category_dict[category_text]
+                            for category in categories:
+                                category_list.append(category)
                     time.sleep(0.5)
                     break
                 except Exception as e:
@@ -439,7 +431,6 @@ def conn_mongodb(detail_info_list):
 def crwl_data():
     driver.get(url=URL)
     try:
-        time.sleep(random.uniform(2, 3))
         WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.XPATH, '//*[@id="section_content"]/div')))
         driver.find_element(By.XPATH, '//*[@id="searchIframe"]')
         focus_iframe('list')
@@ -478,11 +469,10 @@ def crwl_data():
                 break
     except Exception as e:
         print("크롤링 작업이 실패했습니다:", e)
+        driver.close()
 
 # test
 try:
     crwl_data()
 finally:
     driver.close()
-
-
