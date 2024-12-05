@@ -148,11 +148,6 @@ def extract_text_queries(file_path):
     except Exception as e:
         raise ValueError(f"에러 발생: {e}")
 
-def extract_category(pred_text):
-    # 텍스트 값 받아서 카테고리 분류
-
-    pass
-
 def ai_classification_food(url, text_query):
     if url != None:
         image = Image.open(requests.get(url, stream=True).raw)
@@ -174,11 +169,10 @@ def ai_classification_food(url, text_query):
         # 조건에 따라 결과 반환
         if max_prob < 0.89:
             print("이미지 분석 취소: 신뢰도 높은 결과 없음")
-            result = False
+            return False
         else:
             print(f"이미지 분석 성공: {pred_text} (확률: {max_prob.item():.4f})")
-            result = {"pred_text": pred_text, "probability": max_prob.item(), "category": extract_category(pred_text=pred_text)}
-        return result
+            return {"pred_text": pred_text, "probability": max_prob.item()}
     else:
         raise ValueError("이미지 url 확인에 실패했습니다.")
 
@@ -218,11 +212,13 @@ def detail_info():
     address = detail_ele.find('span', class_='LDgIH').get_text() if detail_ele else None
     tel_no = detail_ele.find('span', class_='xlx7Q').get_text() if detail_ele else None
     star_rate = (subject_ele.find('span', class_='PXMot LXIwF').get_text() if subject_ele.find('span', class_='PXMot LXIwF') else "Node")
-    category = subject_ele.find('span', class_='lnJFt').get_text() if subject_ele else None
+    tag = subject_ele.find('span', class_='lnJFt').get_text() if subject_ele else None
     lat_lon_list = get_lat_lon(input_address=address)
     latitude = lat_lon_list[0]
     longitude = lat_lon_list[1]
-    tags = ""
+    tags = []
+    tags.append(tag)
+
 
     # review_cn 연산
     visitor_review_txt = subject_ele.find('a', attrs={"href": f"/restaurant/{store_id}/review/visitor"}).get_text() if subject_ele else None
@@ -297,18 +293,34 @@ def detail_info():
                     time.sleep(random.uniform(2, 3))
                     img_elems = driver.find_elements(By.CLASS_NAME, 'wzrbN')
 
+                    text_category_dict = {}
+                    text_query = []
+                    category_list = []
+
                     with open(text_query_file, "r", encoding="utf-8") as file:
                         # 파일에서 줄 단위로 읽기
                         lines = file.readlines()
-                        # 각 줄에서 '|' 앞부분만 추출
-                        text_query = [line.split("|")[0].strip() for line in lines if "|" in line]
-                        
+
+                        # 각 줄 key value로 추출
+                        for line in lines:
+                            if "|" in line:
+                                for key, value in line:
+                                    key = line.split("|")[0].strip()
+                                    value = line.split("|")[1].strip()
+                                    text_category_dict[key] = value
+                                    text_query.append(key)
 
                     for img in img_elems:
                         img_url = img.find_element(By.XPATH, './/a/img').get_attribute('src')
-                        is_img = ai_classification_food(url=img_url, text_query=text_query)
-                        if is_img != False:
+                        ai_classification_result = ai_classification_food(url=img_url, text_query=text_query)
+                        if ai_classification_result != False:
+                            category_text = ai_classification_result['pred_text']
                             img_list.append(img_url)
+
+                        categories = text_category_dict[category_text]
+                        for category in categories:
+                            category_list.append(category)
+
                     time.sleep(0.5)
                     break
                 except Exception as e:
@@ -362,7 +374,7 @@ def detail_info():
             'type': 'Point',
             'coordinates': [latitude, longitude]
         },
-        'category': category,
+        'category': category_list,
         'image_url': img_list,
         'naver_url': cleaned_url,
         'simple_review': review_list[0],
