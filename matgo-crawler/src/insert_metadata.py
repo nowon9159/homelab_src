@@ -67,7 +67,7 @@ client = MongoClient(mongo_client_url, tls=True, tlsAllowInvalidCertificates=Tru
 # AI 이미지 분석
 model = AutoModel.from_pretrained("Bingsu/clip-vit-large-patch14-ko")
 processor = AutoProcessor.from_pretrained("Bingsu/clip-vit-large-patch14-ko")
-text_query_file = "food_categories.txt"
+TEXT_QUERY_FILE = "food_categories.txt"
 
 # 페이지 스크롤
 def page_scroll(class_name):
@@ -134,19 +134,6 @@ def get_lat_lon(input_address):
     driver.switch_to.window(driver.window_handles[0])
 
     return [lat_value, lon_value]
-
-def extract_text_queries(file_path):
-    try:
-        with open(text_query_file, "r", encoding="utf-8") as file:
-            # 파일에서 줄 단위로 읽기
-            lines = file.readlines()
-            # 각 줄에서 '|' 앞부분만 추출
-            text_query = [line.split("|")[0].strip() for line in lines if "|" in line]
-            return text_query
-    except FileNotFoundError:
-        raise ValueError(f"파일을 찾을 수 없습니다: {file_path}")
-    except Exception as e:
-        raise ValueError(f"에러 발생: {e}")
 
 def ai_classification_food(url, text_query):
     if url != None:
@@ -297,18 +284,23 @@ def detail_info():
                     text_query = []
                     category_list = []
 
-                    with open(text_query_file, "r", encoding="utf-8") as file:
-                        # 파일에서 줄 단위로 읽기
-                        lines = file.readlines()
+                    try:
+                        with open(TEXT_QUERY_FILE, "r", encoding="utf-8") as file:
+                            # 파일에서 줄 단위로 읽기
+                            lines = file.readlines()
 
-                        # 각 줄 key value로 추출
-                        for line in lines:
-                            if "|" in line:
-                                for key, value in line:
-                                    key = line.split("|")[0].strip()
-                                    value = line.split("|")[1].strip()
-                                    text_category_dict[key] = value
-                                    text_query.append(key)
+                            # 각 줄 key value로 추출
+                            for line in lines:
+                                if "|" in line:
+                                    for key, value in line:
+                                        key = line.split("|")[0].strip()
+                                        value = line.split("|")[1].strip()
+                                        text_category_dict[key] = value
+                                        text_query.append(key)
+                    except FileNotFoundError:
+                        raise ValueError(f"파일을 찾을 수 없습니다: {TEXT_QUERY_FILE}")
+                    except Exception as e:
+                        raise ValueError(f"에러 발생: {e}")
 
                     for img in img_elems:
                         img_url = img.find_element(By.XPATH, './/a/img').get_attribute('src')
