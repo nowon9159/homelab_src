@@ -65,9 +65,10 @@ actions = ActionChains(driver)
 client = MongoClient(mongo_client_url, tls=True, tlsAllowInvalidCertificates=True)
 
 # AI 이미지 분석
+TEXT_QUERY_FILE = "./matgo-crawler/src/food_categories.txt"
 model = AutoModel.from_pretrained("Bingsu/clip-vit-large-patch14-ko")
 processor = AutoProcessor.from_pretrained("Bingsu/clip-vit-large-patch14-ko")
-TEXT_QUERY_FILE = "food_categories.txt"
+
 
 # 페이지 스크롤
 def page_scroll(class_name):
@@ -138,6 +139,8 @@ def get_lat_lon(input_address):
 def ai_classification_food(url, text_query):
     if url != None:
         image = Image.open(requests.get(url, stream=True).raw)
+        
+
 
         # 입력 데이터 준비
         inputs = processor(text=text_query, images=image, return_tensors="pt", padding=True)
@@ -285,18 +288,17 @@ def detail_info():
                     category_list = []
 
                     try:
-                        with open(TEXT_QUERY_FILE, "r", encoding="utf-8") as file:
-                            # 파일에서 줄 단위로 읽기
+                        with open(file=TEXT_QUERY_FILE, mode="r", encoding="utf-8") as file:
                             lines = file.readlines()
-
-                            # 각 줄 key value로 추출
                             for line in lines:
                                 if "|" in line:
-                                    for key, value in line:
-                                        key = line.split("|")[0].strip()
-                                        value = line.split("|")[1].strip()
-                                        text_category_dict[key] = value
-                                        text_query.append(key)
+                                    key, value = line.strip().split("|", maxsplit=1)
+                                    key = key.strip()
+                                    value = value.strip()
+
+                                    if value:
+                                        text_category_dict[key] = eval(value)
+                                    text_query.append(key)
                     except FileNotFoundError:
                         raise ValueError(f"파일을 찾을 수 없습니다: {TEXT_QUERY_FILE}")
                     except Exception as e:
@@ -437,7 +439,7 @@ def conn_mongodb(detail_info_list):
 def crwl_data():
     driver.get(url=URL)
     try:
-        time.sleep(random.uniform(1, 2))
+        time.sleep(random.uniform(2, 3))
         WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.XPATH, '//*[@id="section_content"]/div')))
         driver.find_element(By.XPATH, '//*[@id="searchIframe"]')
         focus_iframe('list')
