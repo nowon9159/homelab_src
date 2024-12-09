@@ -1,3 +1,17 @@
+"""
+로직 설명
+1. iframe 타고 들어감
+2. store_list 추출 ( 한번에 스크롤 맨 밑으로, 리스트 길이만큼 반복 )
+3. 위에서부터 하나씩 상세정보 들어감 ( 가게정보, 이미지 추출 )
+3.1 tab_list 로 홈, 메뉴, 사진, 리뷰 등 리스트 생성 // 해당 리스트 만큼 탭 반복해서 리뷰 및 사진에만 기능 동작
+3.2 리뷰 탭의 경우 페이지 내 모든 리뷰 추출해서 한 리스트에 담음, 리뷰 내 태그도 추출해서 리스트에 담음
+3.3 사진 탭의 경우 모든 이미지 element 추출해서 한 이미지에 담고 이미지 만큼 반복. 반복 내용은 AI 이미지 분석 후 카테고리 추출.
+3.4 3.2와 3.3 실행 중 탭을 못찾는 경우 탭 찾는 예외 처리
+3.5 TEXT_QUERY_FILE 을 이용해서 3.3 과정 중 비교 군 파일 open
+3.6 변수화 마무리 되면 return 을 이용해 image_meta_list, store_information_list 반환
+4. return 값을 리스트에 담아서 DB에 전송
+"""
+
 # lib 
 ## selenium
 from selenium import webdriver
@@ -34,7 +48,7 @@ load_dotenv()
 # 상수
 ## 크롤링
 WAIT_TIMEOUT = random.uniform(10, 11) ## 대기 시간(초)
-KEYWORD = "양천향교역 된장찌개" ## 테스트코드 맥도날드 명동점
+KEYWORD = "양천향교역 김치찌개" ## 테스트코드 맥도날드 명동점
 URL = f"https://map.naver.com/restaurant/list?query={KEYWORD}" # https://pcmap.place.naver.com/place/list?query <-- 해당 url도 가능
 ## AI API KEY
 
@@ -79,7 +93,6 @@ def page_scroll(class_name):
             driver.execute_script("arguments[0].scrollTop += 3000;", scroll_container)
             # 페이지 로드를 기다림
             time.sleep(random.uniform(1, 2))
-            time.sleep(0.5)  # 동적 콘텐츠 로드 시간에 따라 조절
             # 스크롤 높이 계산
             new_height = driver.execute_script("return arguments[0].scrollHeight", scroll_container)
 
@@ -155,7 +168,7 @@ def ai_classification_food(url, text_query):
 
         # 조건에 따라 결과 반환
         if max_prob < 0.89:
-            print("이미지 분석 취소: 신뢰도 높은 결과 없음")
+            print(f"이미지 분석 취소: 신뢰도 높은 결과 없음 , max_prob: {max_prob}")
             return False
         else:
             print(f"이미지 분석 성공: {pred_text} (확률: {max_prob.item():.4f})")
@@ -164,7 +177,7 @@ def ai_classification_food(url, text_query):
         raise ValueError("이미지 url 확인에 실패했습니다.")
 
 def calc_famous_cnt(star, review):
-    famous_cnt = star * 0.01 + review * 0.0002
+    famous_cnt = (float(star) * 0.01) + (float(review) * 0.0002)
     return famous_cnt
 
 # img_list의 모든 URL에 대해 dict 리스트 구성
@@ -199,6 +212,7 @@ def detail_info():
     address = detail_ele.find('span', class_='LDgIH').get_text() if detail_ele else None
     tel_no = detail_ele.find('span', class_='xlx7Q').get_text() if detail_ele else None
     star_rate = (subject_ele.find('span', class_='PXMot LXIwF').get_text() if subject_ele.find('span', class_='PXMot LXIwF') else "Node")
+    star_rate = float(re.search(r"\d+\.\d+", star_rate).group())
     tag = subject_ele.find('span', class_='lnJFt').get_text() if subject_ele else None
     lat_lon_list = get_lat_lon(input_address=address)
     latitude = lat_lon_list[0]
@@ -215,7 +229,7 @@ def detail_info():
     review_cn = int(visitor_review_cn.replace(',', '')) + int(blog_review_cn.replace(',', ''))
 
     # 이미지 리스트, 리뷰 리스트 수집
-    focus_iframe("detail")
+    focus_iframe("detail") # 반드시 필요
     WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.CLASS_NAME, 'CB8aP')))
 
     img_list = []
@@ -246,7 +260,6 @@ def detail_info():
                     
                     tags = ",".join(tags_list)
 
-                    time.sleep(0.5)
                     break
                 except Exception as e:
                     try:
@@ -263,8 +276,6 @@ def detail_info():
                         )
                         transform_style = flicking_camera.get_attribute('style')
                         print(f"Transform style: {transform_style}")
-
-                        time.sleep(1)
                     except Exception as button_error:
                         print(f"리뷰 리스트 생성 실패: {button_error}")
         if tab.text == '사진':
@@ -307,7 +318,6 @@ def detail_info():
                             categories = text_category_dict[category_text]
                             for category in categories:
                                 category_list.append(category)
-                    time.sleep(0.5)
                     break
                 except Exception as e:
                     try:
@@ -324,8 +334,6 @@ def detail_info():
                         )
                         transform_style = flicking_camera.get_attribute('style')
                         print(f"Transform style: {transform_style}")
-
-                        time.sleep(1)
                     except Exception as button_error:
                         print(f"사진 리스트 생성 실패: {button_error}")
 
@@ -341,7 +349,6 @@ def detail_info():
             'img_url': img_url,
             'tags': tags
         }
-        time.sleep(0.2)
         image_meta_list.append(image_meta)
     
     store_information = {
@@ -453,6 +460,9 @@ def crwl_data():
             image_meta_list = deatil_info_list[0]
             store_information_list = deatil_info_list[1]
             
+            if len(image_meta_list) == 0:
+                continue
+
             # 상세 정보 크롤링 및 mongo DB에 저장
             conn_mongodb(image_meta_list)
             conn_mongodb(store_information_list)

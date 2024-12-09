@@ -154,3 +154,4 @@
 식혜|["dssrt"]
 수정과|["dssrt"]
 인절미|["dssrt"]
+고기|["group", "fmly", "dinner"]
