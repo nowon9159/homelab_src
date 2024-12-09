@@ -7,150 +7,150 @@
 수육|["dinner", "fmly", "night", "group"]
 국밥|["dinner", "lunch", "group"]
 삼겹살|["night", "dinner", "fmly", "group"]
-족발|
-보쌈|
-부대찌개|
-비빔밥|
-제육볶음|
-김치볶음밥|
-짜장밥|
-오징어덮밥|
-오므라이스|
-찜닭|
-스테이크|
-닭볶음탕|
-아귀찜|
-감자채볶음|
-장조림|
-감자조림|
-멸치볶음|
-콩나물무침|
-토스트|
-쿠키|
-샌드위치|
-떡볶이|
-시리얼|
-호떡|
-떡꼬치|
-육개장|
-떡국|
-미역국|
-소고기무국|
-콩나물국|
-시래깃국|
-두부김치|
-튀김|
-골뱅이무침|
-부침개|
-어묵탕|
-순대볶음|
-라면|
-스파게티|
-잔치국수|
-비빔국수|
-칼국수|
-우동|
-볶음우동|
-콩국수|
-초밥|
-스시|
-유부초밥|
-밥버거|
-샐러드|
-오믈렛|
-계란찜|
-불고기|
-계란말이|
-간장게장|
-양념게장|
-누룽지|
-주먹밥|
-돈까스|
-탕수육|
-짬뽕|
-회|
-방어회|
-광어회|
-매운탕|
-잡채
-냉면
-감자탕
-곱창전골
-빈대떡
-김밥
-갈비탕
-삼계탕
-오징어튀김
-김말이
-순대
-라볶이
-연어회
-조개찜
-해물찜
-고등어구이
-삼치구이
-꽁치구이
-붕어빵
-닭강정
-군밤
-군고구마
-팥빙수
-찹쌀떡
-약과
-바람떡
-떡케이크
-양념치킨
-후라이드치킨
-치킨
-불고기피자
-피자
-불고기버거
-햄버거
-크로플
-소불고기덮밥
-곱창볶음
-순대볶음
-오징어볶음
-청국장
-동태찌개
-북엇국
-오리백숙
-불낙전골
-설렁탕
-추어탕
-우렁강된장
-도토리묵
-쌈밥
-황태구이
-고추장불고기
-꼬막비빔밥
-낙지볶음
-해물파전
-묵밥
-찹쌀호떡
-계란빵
-닭꼬치
-쫄면
-만두국
-김치전
-치즈떡볶이
-핫바
-병어찜
-홍합탕
-도다리쑥국
-전복죽
-멍게비빔밥
-생선회덮밥
-가리비구이
-게살비빔밥
-물회
-해물칼국수
-꿀떡
-찹쌀도너츠
-곶감
-약밥
-송편
-유과
-식혜
-수정과
-인절미
+족발|["dinner", "fmly", "night", "group"]
+보쌈|["dinner", "fmly", "night", "group"]
+부대찌개|["group", "lunch", "dinner"]
+비빔밥|["solo", "lunch", "dinner", "fmly"]
+제육볶음|["lunch", "dinner", "fmly", "group"]
+김치볶음밥|["solo", "lunch", "dinner"]
+짜장밥|["solo", "lunch", "dinner"]
+오징어덮밥|["solo", "lunch", "dinner"]
+오므라이스|["solo", "lunch", "dinner"]
+찜닭|["dinner", "fmly", "group"]
+스테이크|["cupl", "dinner", "fmly"]
+닭볶음탕|["dinner", "fmly", "group"]
+아귀찜|["cupl", "dinner", "fmly", "group"]
+감자채볶음|["lunch", "side"]
+장조림|["lunch", "side"]
+감자조림|["lunch", "side"]
+멸치볶음|["lunch", "side"]
+콩나물무침|["lunch", "side"]
+토스트|["solo", "breakfast"]
+쿠키|["dssrt"]
+샌드위치|["solo", "lunch", "breakfast"]
+떡볶이|["night", "dinner", "group"]
+시리얼|["solo", "breakfast"]
+호떡|["dssrt", "night"]
+떡꼬치|["dssrt", "night"]
+육개장|["lunch", "dinner", "fmly"]
+떡국|["lunch", "dinner", "fmly"]
+미역국|["lunch", "dinner", "fmly"]
+소고기무국|["lunch", "dinner", "fmly"]
+콩나물국|["lunch", "dinner", "fmly"]
+시래깃국|["lunch", "dinner", "fmly"]
+두부김치|["night", "dinner", "group"]
+튀김|["dssrt", "night"]
+골뱅이무침|["night", "dinner", "group"]
+부침개|["night", "dinner", "group"]
+어묵탕|["night", "dinner", "group"]
+순대볶음|["night", "dinner", "group"]
+라면|["solo", "lunch", "dinner", "night"]
+스파게티|["cupl", "lunch", "dinner"]
+잔치국수|["solo", "lunch", "dinner"]
+비빔국수|["solo", "lunch", "dinner"]
+칼국수|["solo", "lunch", "dinner"]
+우동|["solo", "lunch", "dinner"]
+볶음우동|["solo", "lunch", "dinner"]
+콩국수|["solo", "lunch", "dinner"]
+초밥|["cupl", "lunch", "dinner"]
+스시|["cupl", "lunch", "dinner"]
+유부초밥|["solo", "lunch"]
+밥버거|["solo", "lunch"]
+샐러드|["solo", "lunch"]
+오믈렛|["solo", "lunch", "dinner"]
+계란찜|["lunch", "dinner", "fmly"]
+불고기|["dinner", "fmly", "group"]
+계란말이|["lunch", "dinner", "fmly"]
+간장게장|["dinner", "fmly", "group"]
+양념게장|["dinner", "fmly", "group"]
+누룽지|["solo", "lunch"]
+주먹밥|["solo", "lunch"]
+돈까스|["lunch", "dinner", "fmly"]
+탕수육|["dinner", "fmly", "group"]
+짬뽕|["lunch", "dinner"]
+회|["cupl", "dinner", "fmly", "group"]
+방어회|["cupl", "dinner", "fmly", "group"]
+광어회|["cupl", "dinner", "fmly", "group"]
+매운탕|["dinner", "fmly", "group"]
+잡채|["lunch", "dinner", "fmly"]
+냉면|["solo", "lunch", "dinner"]
+감자탕|["dinner", "fmly", "group"]
+곱창전골|["dinner", "fmly", "group"]
+빈대떡|["night", "dinner", "group"]
+김밥|["solo", "lunch"]
+갈비탕|["lunch", "dinner", "fmly"]
+삼계탕|["lunch", "dinner", "fmly"]
+오징어튀김|["side", "lunch"]
+김말이|["side", "lunch"]
+순대|["solo", "lunch"]
+라볶이|["night", "dinner"]
+연어회|["cupl", "dinner", "fmly", "group"]
+조개찜|["cupl", "dinner", "fmly", "group"]
+해물찜|["dinner", "fmly", "group"]
+고등어구이|["lunch", "dinner", "fmly"]
+삼치구이|["lunch", "dinner", "fmly"]
+꽁치구이|["lunch", "dinner", "fmly"]
+붕어빵|["dssrt"]
+닭강정|["night", "dinner"]
+군밤|["dssrt"]
+군고구마|["dssrt"]
+팥빙수|["dssrt"]
+찹쌀떡|["dssrt"]
+약과|["dssrt"]
+바람떡|["dssrt"]
+떡케이크|["dssrt", "fmly"]
+양념치킨|["night", "dinner", "group"]
+후라이드치킨|["night", "dinner", "group"]
+치킨|["night", "dinner", "group"]
+불고기피자|["dinner", "fmly", "group"]
+피자|["dinner", "fmly", "group"]
+불고기버거|["solo", "lunch", "dinner"]
+햄버거|["solo", "lunch", "dinner"]
+크로플|["dssrt"]
+소불고기덮밥|["lunch", "dinner", "fmly"]
+곱창볶음|["dinner", "night", "fmly", "group"]
+순대볶음|["night", "dinner", "group"]
+오징어볶음|["lunch", "dinner", "fmly"]
+청국장|["solo", "lunch", "dinner"]
+동태찌개|["lunch", "dinner", "fmly"]
+북엇국|["solo", "lunch", "dinner"]
+오리백숙|["dinner", "fmly", "group"]
+불낙전골|["dinner", "fmly", "group"]
+설렁탕|["lunch", "dinner", "fmly"]
+추어탕|["lunch", "dinner", "fmly"]
+우렁강된장|["lunch", "dinner", "fmly"]
+도토리묵|["lunch", "fmly"]
+쌈밥|["lunch", "dinner", "fmly"]
+황태구이|["lunch", "dinner", "fmly"]
+고추장불고기|["lunch", "dinner", "fmly"]
+꼬막비빔밥|["lunch", "dinner", "fmly"]
+낙지볶음|["lunch", "dinner", "fmly"]
+해물파전|["night", "dinner", "group"]
+묵밥|["lunch", "dinner"]
+찹쌀호떡|["dssrt"]
+계란빵|["dssrt"]
+닭꼬치|["night", "group"]
+쫄면|["lunch", "dinner"]
+만두국|["lunch", "dinner", "fmly"]
+김치전|["night", "dinner", "group"]
+치즈떡볶이|["night", "dinner"]
+핫바|["solo", "lunch"]
+병어찜|["dinner", "fmly", "group"]
+홍합탕|["dinner", "fmly", "group"]
+도다리쑥국|["lunch", "dinner"]
+전복죽|["lunch", "dinner"]
+멍게비빔밥|["lunch", "dinner"]
+생선회덮밥|["lunch", "dinner"]
+가리비구이|["dinner", "fmly", "group"]
+게살비빔밥|["lunch", "dinner"]
+물회|["lunch", "dinner"]
+해물칼국수|["lunch", "dinner", "fmly"]
+꿀떡|["dssrt"]
+찹쌀도너츠|["dssrt"]
+곶감|["dssrt"]
+약밥|["dssrt"]
+송편|["dssrt"]
+유과|["dssrt"]
+식혜|["dssrt"]
+수정과|["dssrt"]
+인절미|["dssrt"]
