@@ -40,20 +40,40 @@ services:
       - matgo
     ports:
       - "37017:27017"
-  gitlab:
-    image: gitlab/gitlab-ce:latest
+  gitea:
+    image: gitea/gitea:1.22.4
     volumes:
-      - ./gitlab/log:/var/log/gitlab
-        ./gitlab/opt:/var/opt/gitlab
+      - ./gitea:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
     restart: unless-stopped
     environment:
-      - name=value
+      - USER_UID=1000
+      - USER_GID=1000
+      - GITEA__database__DB_TYPE=mysql
+      - GITEA__database__HOST=git-db:3306
+      - GITEA__database__NAME=gitea
+      - GITEA__database__USER=gitea
+      - GITEA__database__PASSWD=gitea
     networks:
       - matgo
     ports:
-      - "31080:80"
-      - "31443:443"
+      - "31080:3000"
       - "31022:22"
+    depends_on:
+      - gitea-db
+  gitea-db:
+    image: mysql:8
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=gitea
+      - MYSQL_USER=gitea
+      - MYSQL_PASSWORD=gitea
+      - MYSQL_DATABASE=gitea
+    networks:
+      - matgo
+    volumes:
+      - ./mysql:/var/lib/mysql
 networks:
   matgo:
     driver: bridge
