@@ -1,21 +1,14 @@
 from pymongo import MongoClient
-import os
+from config import MONGO_DB_CLIENT_URL
 
+mongo_client_url = MONGO_DB_CLIENT_URL
+client = MongoClient(mongo_client_url, tls=True, tlsAllowInvalidCertificates=True)
 
-
-def upload_to_db(store_list, db_name):
-    """
-    DB에 Store에 대한 상세 JSON 데이터 삽입
-
-    param:
-        
-    
-    """
-    if db_name == False:
-        raise ValueError()
-    # MongoDB 업로드
-    client = MongoClient("mongodb://localhost:27017/")
-    db = client["my_database"]
-    collection = db["stores"]
-    collection.insert_many(data_list)
-
+def conn_mongodb(collection_name, detail_info_list):
+    db = client.matgo
+    try:
+        collection = db[collection_name]
+        collection.insert_many(detail_info_list)
+        print(f"\n데이터가 '{collection_name}' 컬렉션에 성공적으로 삽입되었습니다.", "\n", detail_info_list, "\n")
+    except Exception as e:
+        print(f"MongoDB의 '{collection_name}' 컬렉션에 데이터 삽입 중 오류 발생:", e)
