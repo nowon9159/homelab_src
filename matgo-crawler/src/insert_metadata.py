@@ -10,6 +10,7 @@
 3.5 TEXT_QUERY_FILE 을 이용해서 3.3 과정 중 비교 군 파일 open
 3.6 변수화 마무리 되면 return 을 이용해 image_meta_list, store_information_list 반환
 4. return 값을 리스트에 담아서 DB에 전송
+테스트
 """
 
 # lib 
