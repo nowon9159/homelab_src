@@ -1,5 +1,5 @@
 # Crawler
-KEYWORD = "김치찌개"
+KEYWORD = "양천향교역 김치찌개"
 
 # DB
 MONGO_URI = "mongodb://localhost:27017"

@@ -3,7 +3,7 @@ import os
 
 
 
-def upload_to_databases(store_list, db_name):
+def upload_to_db(store_list, db_name):
     """
     DB에 Store에 대한 상세 JSON 데이터 삽입
 

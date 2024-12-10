@@ -234,7 +234,6 @@ def detail_info():
 
     img_list = []
     review_list = []
-    tags_list = []
 
     for tab in tab_list:
         if tab.text == '리뷰':
@@ -253,12 +252,9 @@ def detail_info():
                         review_list.append(cleaned_review_text)
 
                     tag_elems = driver.find_elements(By.CLASS_NAME,'pui__V8F9nN')
-
-                    for tag in tag_elems:
-                        tag_text = tag.text
-                        tags_list.append(tag_text)
                     
-                    tags = ",".join(tags_list)
+                    for tag in tag_elems:
+                        tags.append(tag.text)
 
                     break
                 except Exception as e:
@@ -312,12 +308,16 @@ def detail_info():
                         img_url = img.find_element(By.XPATH, './/a/img').get_attribute('src')
                         ai_classification_result = ai_classification_food(url=img_url, text_query=text_query)
                         if ai_classification_result != False:
-                            category_text = ai_classification_result['pred_text']
+                            food_text = ai_classification_result['pred_text']
                             img_list.append(img_url)
 
-                            categories = text_category_dict[category_text]
+                            categories = text_category_dict[food_text]
                             for category in categories:
                                 category_list.append(category)
+                                
+                            tags.append(food_text)
+                    
+                    tags = list(set(tags))
                     break
                 except Exception as e:
                     try:
