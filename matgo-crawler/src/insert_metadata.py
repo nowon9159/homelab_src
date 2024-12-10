@@ -11,6 +11,11 @@
 3.6 변수화 마무리 되면 return 을 이용해 image_meta_list, store_information_list 반환
 4. return 값을 리스트에 담아서 DB에 전송
 테스트
+
+1. 컬렉션 별로 분류) img_meta / store info
+2. 나누다 보면 양쪽에 공통으로 쓰이는 함수  -> 공통화
+3. 어떻게 모으고 쪼갤지를 구상 ex) 지금처럼 기능별로 파일화한걸 1depth package, utils.py 만들어서 함수별 정의
+
 """
 
 # lib 
