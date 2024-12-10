@@ -381,13 +381,16 @@ def detail_info():
     return image_meta_list, store_information_list
 
 # MongoDB에 데이터 삽입 함수
-def conn_mongodb(detail_info_list):
-    db = client.matgo  # 'matgo'라는 MongoDB 데이터베이스 선택
+def conn_mongodb(collection_name, detail_info_list):
+
+    db = client.matgo
     try:
-        db.metadata.insert_many(detail_info_list)  # 리스트를 insert_many로 삽입
-        print("\n", "데이터가 MongoDB에 성공적으로 삽입되었습니다.", detail_info_list, "\n")
+        collection = db[collection_name]
+        collection.insert_many(detail_info_list)
+        print(f"\n데이터가 '{collection_name}' 컬렉션에 성공적으로 삽입되었습니다.", "\n", detail_info_list, "\n")
     except Exception as e:
-        print("MongoDB에 데이터 삽입 중 오류 발생:", e)
+        print(f"MongoDB의 '{collection_name}' 컬렉션에 데이터 삽입 중 오류 발생:", e)
+
 
 # def conn_mysql():
 #     connection = None
@@ -464,8 +467,8 @@ def crwl_data():
                 continue
 
             # 상세 정보 크롤링 및 mongo DB에 저장
-            conn_mongodb(image_meta_list)
-            conn_mongodb(store_information_list)
+            conn_mongodb("image_meta", image_meta_list)
+            conn_mongodb("store_information", store_information_list)
 
             # # 상세 정보 크롤링 및 mysql DB에 저장
             # mysql_connection = conn_mysql()
