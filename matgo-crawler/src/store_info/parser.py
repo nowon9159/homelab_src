@@ -5,7 +5,7 @@ from urllib.parse import urlparse, urlunparse # url query 정리
 import re
 from selenium.webdriver.common.by import By
 
-from common.utils import Utils
+from common.utils import *
 from common.constants import WAIT_TIMEOUT_THREE, WAIT_TIMEOUT_FOUR, WAIT_TIMEOUT_TEN, WAIT_TIMEOUT_ELE
 
 def simple_review():
@@ -57,11 +57,11 @@ def parse_page(driver, settings, tab_list):
     tel_no = detail_ele.find('span', class_='xlx7Q').get_text() if detail_ele else None
     star_rate = (subject_ele.find('span', class_='PXMot LXIwF').get_text() if subject_ele.find('span', class_='PXMot LXIwF') else "Node")
     star_rate = float(re.search(r"\d+\.\d+", star_rate).group())
-    coord_list = Utils.get_lat_lon(driver, settings, input_address=address)
+    coord_list = get_lat_lon(driver, settings, input_address=address)
     review_cnt = review_count(store_id, subject_ele)
     
-    Utils.focus_iframe(driver, "detail")
-    Utils.custom_wait(driver, ((By.CLASS_NAME, 'CB8aP')), WAIT_TIMEOUT_THREE, WAIT_TIMEOUT_FOUR)
+    focus_iframe(driver, "detail")
+    custom_wait(driver, ((By.CLASS_NAME, 'CB8aP')), WAIT_TIMEOUT_THREE, WAIT_TIMEOUT_FOUR)
     for tab in tab_list:
         if tab.text == '리뷰':
             simple_review()
@@ -89,6 +89,6 @@ def parse_page(driver, settings, tab_list):
         # 'image_url': main_img,
         'naver_url': cleaned_url,
         # 'simple_review': review_list[0],
-        'famous_cnt': Utils.calc_famous_cnt(star=star_rate, review=review_cnt)
+        'famous_cnt': calc_famous_cnt(star=star_rate, review=review_cnt)
     }
     return store_information

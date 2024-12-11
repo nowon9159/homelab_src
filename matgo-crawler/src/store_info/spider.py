@@ -9,7 +9,7 @@ from selenium.webdriver import ActionChains
 from parser import parse_page
 from storage import insert_data
 ## common
-from common.utils import Utils
+from common.utils import *
 from common.constants import WAIT_TIMEOUT_ONE, WAIT_TIMEOUT_TWO, WAIT_TIMEOUT_TEN, WAIT_TIMEOUT_ELE
 
 class MySpider :
@@ -20,7 +20,7 @@ class MySpider :
 
     # 상세 정보 크롤링
     def detail_info(self):
-        Utils.focus_iframe(self.driver, 'detail')
+        focus_iframe(self.driver, 'detail')
         tab_list = self.driver.find_elements(By.CLASS_NAME, 'veBoZ')
         
         store_info = parse_page(self.driver, self.settings, tab_list)
@@ -34,9 +34,9 @@ class MySpider :
         for index, store in enumerate(list, start=1):
             self.driver.switch_to.parent_frame()
 
-            Utils.custom_wait(self.driver, (By.CSS_SELECTOR, ".SEARCH_MARKER > div"), WAIT_TIMEOUT_TEN, WAIT_TIMEOUT_ELE)
+            custom_wait(self.driver, (By.CSS_SELECTOR, ".SEARCH_MARKER > div"), WAIT_TIMEOUT_TEN, WAIT_TIMEOUT_ELE)
             
-            Utils.focus_iframe(self.driver, 'list')
+            focus_iframe(self.driver, 'list')
 
             self.actions.click(store).perform()
             store_info_list = self.detail_info()
@@ -64,8 +64,8 @@ class MySpider :
         # 이후 크롤링 로직 추가...
         try:
             self.driver.find_element(By.XPATH, '//*[@id="searchIframe"]')
-            Utils.focus_iframe(self.driver, 'list')
-            Utils.page_scroll(self.driver, "Ryr1F")
+            focus_iframe(self.driver, 'list')
+            page_scroll(self.driver, "Ryr1F")
 
             store_list = self.driver.find_elements(By.CLASS_NAME, 'TYaxT')
             self.crwl_list(store_list)
