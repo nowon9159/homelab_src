@@ -11,6 +11,11 @@
 3.6 변수화 마무리 되면 return 을 이용해 image_meta_list, store_information_list 반환
 4. return 값을 리스트에 담아서 DB에 전송
 테스트
+
+1. 컬렉션 별로 분류) img_meta / store info
+2. 나누다 보면 양쪽에 공통으로 쓰이는 함수  -> 공통화
+3. 어떻게 모으고 쪼갤지를 구상 ex) 지금처럼 기능별로 파일화한걸 1depth package, utils.py 만들어서 함수별 정의
+
 """
 
 # lib 
@@ -108,8 +113,7 @@ def focus_iframe(type):
     if type == 'list':
         iframe = driver.find_element(By.XPATH,'//*[@id="searchIframe"]')
     elif type == 'detail':
-        wait = WebDriverWait(driver, WAIT_TIMEOUT)
-        wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="entryIframe"]')))
+        WebDriverWait(driver, WAIT_TIMEOUT).until(EC.presence_of_element_located((By.XPATH, '//*[@id="entryIframe"]')))
         
         iframe = driver.find_element(By.XPATH,'//*[@id="entryIframe"]')
     driver.switch_to.frame(iframe)
@@ -214,10 +218,10 @@ def detail_info():
     tel_no = detail_ele.find('span', class_='xlx7Q').get_text() if detail_ele else None
     star_rate = (subject_ele.find('span', class_='PXMot LXIwF').get_text() if subject_ele.find('span', class_='PXMot LXIwF') else "Node")
     star_rate = float(re.search(r"\d+\.\d+", star_rate).group())
-    tag = subject_ele.find('span', class_='lnJFt').get_text() if subject_ele else None
     lat_lon_list = get_lat_lon(input_address=address)
     latitude = lat_lon_list[0]
     longitude = lat_lon_list[1]
+    tag = subject_ele.find('span', class_='lnJFt').get_text() if subject_ele else None
     tags = []
     tags.append(tag)
 
@@ -251,7 +255,6 @@ def detail_info():
                         review_text = review.text
                         cleaned_review_text = review_text.replace("\n", " ").replace("더보기","").strip()
                         review_list.append(cleaned_review_text)
-
                     tag_elems = driver.find_elements(By.CLASS_NAME,'pui__V8F9nN')
                     
                     for tag in tag_elems:
