@@ -4,21 +4,112 @@ from bs4 import BeautifulSoup
 from urllib.parse import urlparse, urlunparse # url query 정리
 import re
 from selenium.webdriver.common.by import By
-
 from common.utils import *
-from common.constants import WAIT_TIMEOUT_THREE, WAIT_TIMEOUT_FOUR, WAIT_TIMEOUT_TEN, WAIT_TIMEOUT_ELE
+from common.constants import WAIT_TIMEOUT_THREE, WAIT_TIMEOUT_FOUR, WAIT_TIMEOUT_TEN, WAIT_TIMEOUT_ELE, TEXT_QUERY_FILE
+import requests
+from transformers import AutoModel, AutoProcessor
+from PIL import Image
+import torch
 
-def simple_review():
+
+def review_list(driver, tab):
     ## 인기순? 리뷰[0] 가져오는 로직 추가 필요
-    return None
+    tab.click()
+    custom_wait(driver, ((By.CLASS_NAME, 'pui__vn15t2')), WAIT_TIMEOUT_THREE, WAIT_TIMEOUT_FOUR)
 
-def main_image():
+    review_elems = driver.find_elements(By.CLASS_NAME, 'pui__vn15t2')
+
+    for review in review_elems:
+        review_text = review.text
+        cleaned_review_text = review_text.replace("\n", " ").replace("더보기","").strip()
+        review_list.append(cleaned_review_text)
+
+    return review_list
+
+def main_image(driver, tab):
     ## 대표 이미지 가져오는 로직 추가 필요
-    return None
+    
+    img_list = []
+    text_category_dict = {}
+    text_query = []
+    category_list = []
+
+    tab.click()
+    custom_wait(driver, ((By.CLASS_NAME, 'wzrbN')), WAIT_TIMEOUT_THREE, WAIT_TIMEOUT_FOUR)
+    img_elems = driver.find_elements(By.CLASS_NAME, 'wzrbN')
+
+    try:
+        with open(file=TEXT_QUERY_FILE, mode="r", encoding="utf-8") as file:
+            lines = file.readlines()
+            for line in lines:
+                if "|" in line:
+                    key, value = line.strip().split("|", maxsplit=1)
+                    key = key.strip()
+                    value = value.strip()
+
+                    if value:
+                        text_category_dict[key] = eval(value)
+                    text_query.append(key)
+    except FileNotFoundError:
+        raise ValueError(f"파일을 찾을 수 없습니다: {TEXT_QUERY_FILE}")
+    except Exception as e:
+        raise ValueError(f"에러 발생: {e}")
+
+    for img in img_elems:
+        img_url = img.find_element(By.XPATH, './/a/img').get_attribute('src')
+        ai_classification_result = ai_classification_food(url=img_url, text_query=text_query)
+        if ai_classification_result != False:
+            food_text = ai_classification_result['pred_text']
+            img_list.append(img_url)
+
+            categories = text_category_dict[food_text]
+            for category in categories:
+                category_list.append(category)
+                
+            tags.append(food_text)
+    
+    tags = list(set(tags))
+
+
+    return {"img_list": img_list, ""}
+
+
 
 def category_list():
     ## 카테고리 가져오는 로직 추가 필요
     return None
+
+def ai_classification_food(url, text_query):
+    if url != None:
+
+        model = AutoModel.from_pretrained("Bingsu/clip-vit-large-patch14-ko")
+        processor = AutoProcessor.from_pretrained("Bingsu/clip-vit-large-patch14-ko")
+
+        image = Image.open(requests.get(url, stream=True).raw)
+        
+        # 입력 데이터 준비
+        inputs = processor(text=text_query, images=image, return_tensors="pt", padding=True)
+
+        with torch.inference_mode():
+            outputs = model(**inputs)
+
+        # 이미지와 텍스트 간의 유사도 계산
+        logits_per_image = outputs.logits_per_image
+        probs = logits_per_image.softmax(dim=1)
+
+        # 확률값에서 가장 큰 값을 찾음
+        max_prob, pred_idx = torch.max(probs[0], dim=0)
+        pred_text = text_query[pred_idx]
+
+        # 조건에 따라 결과 반환
+        if max_prob < 0.89:
+            print(f"이미지 분석 취소: 신뢰도 높은 결과 없음 , max_prob: {max_prob}")
+            return False
+        else:
+            print(f"이미지 분석 성공: {pred_text} (확률: {max_prob.item():.4f})")
+            return {"pred_text": pred_text, "probability": max_prob.item()}
+    else:
+        raise ValueError("이미지 url 확인에 실패했습니다.")
 
 # review_cnt 연산
 def review_count(store_id, ele):
@@ -64,10 +155,10 @@ def parse_page(driver, settings, tab_list):
     custom_wait(driver, ((By.CLASS_NAME, 'CB8aP')), WAIT_TIMEOUT_THREE, WAIT_TIMEOUT_FOUR)
     for tab in tab_list:
         if tab.text == '리뷰':
-            simple_review()
+            review_list(driver)
         if tab.text == '사진':
-            main_image()
-            category_list() # <--? inser_metadata.py 기반이라 여기 아닐수도?
+            main_image(driver)
+            category_list(driver) # <--? inser_metadata.py 기반이라 여기 아닐수도?
             
     store_information = {
         'store_id': store_id,

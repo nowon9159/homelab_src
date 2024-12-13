@@ -32,17 +32,17 @@ def page_scroll(driver, class_name):
     last_height = driver.execute_script("return arguments[0].scrollHeight", scroll_container) # execute_script = js 실행.
 
     while True:
-            # 요소 내에서 아래로 3000px 스크롤
-            driver.execute_script("arguments[0].scrollTop += 3000;", scroll_container)
-            # 페이지 로드를 기다림
-            time.sleep(random_time(WAIT_TIMEOUT_ONE, WAIT_TIMEOUT_TWO))
-            # 스크롤 높이 계산
-            new_height = driver.execute_script("return arguments[0].scrollHeight", scroll_container)
+        # 요소 내에서 아래로 3000px 스크롤
+        driver.execute_script("arguments[0].scrollTop += 3000;", scroll_container)
+        # 페이지 로드를 기다림
+        time.sleep(random_time(WAIT_TIMEOUT_ONE, WAIT_TIMEOUT_TWO))
+        # 스크롤 높이 계산
+        new_height = driver.execute_script("return arguments[0].scrollHeight", scroll_container)
 
-            # 스크롤이 더 이상 늘어나지 않으면 루프 종료
-            if new_height == last_height:
-                break
-            last_height = new_height
+        # 스크롤이 더 이상 늘어나지 않으면 루프 종료
+        if new_height == last_height:
+            break
+        last_height = new_height
 
 # 인기 점수 계산
 def calc_famous_cnt(star, review):
@@ -77,4 +77,4 @@ def get_lat_lon(driver, settings, input_address):
     driver.close()
     driver.switch_to.window(driver.window_handles[0])
 
-    return [lat_value, lon_value]
+    return [lon_value, lat_value]

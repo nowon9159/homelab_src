@@ -9,5 +9,3 @@ class Settings:
         self.COORD_URL = "https://gps.aply.biz/"
         self.USER_AGENT = USER_AGENT
         self.KEYWORD = "양천향교역 김치찌개" #test
-
-# asdfasdfsssss

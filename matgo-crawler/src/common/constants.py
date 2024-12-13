@@ -4,3 +4,4 @@ WAIT_TIMEOUT_THREE = 3
 WAIT_TIMEOUT_FOUR = 4
 WAIT_TIMEOUT_TEN = 10
 WAIT_TIMEOUT_ELE = 11
+TEXT_QUERY_FILE = "./matgo-crawler/src/food_categories.txt"
