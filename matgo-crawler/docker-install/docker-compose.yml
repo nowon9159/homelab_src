@@ -1,6 +1,6 @@
 services:
   frontend:
-    image: matgo-front:0.0.1
+    image: matgo-front:latest
     volumes:
       - ./frontend/app/logs:/app/logs
     restart: unless-stopped
@@ -11,7 +11,7 @@ services:
     ports:
       - "30080:80"
   backend:
-    image: matgo-back:0.0.1
+    image: matgo-back:latest
     volumes:
       - ./backend/app/logs:/app/logs
     restart: unless-stopped
