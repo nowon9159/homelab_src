@@ -20,7 +20,7 @@ services:
     networks:
       - matgo
     ports:
-      - "38080:8080"
+      - "38000:8000"
   mongodb:
     image: mongo:7.0.15
     volumes:
