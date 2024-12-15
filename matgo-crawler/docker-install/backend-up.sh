@@ -1,4 +1,4 @@
-git -C /root/matgo/src/back origin pull origin master
+git -C /root/matgo/src/back pull origin main
 
 docker build -t matgo-back:latest /root/matgo/src/back/matgo-back/.
 
