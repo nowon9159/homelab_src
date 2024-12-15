@@ -1,30 +1,26 @@
 services:
-  # frontend:
-  #   image: matgo-frontend:0.0.1
-  #   volumes:
-  #     - ./frontend/app/logs:/app/logs
-  #   restart: unless-stopped
-  #   environment:
-  #     - name=value
-  #   networks:
-  #     - matgo
-  #   ports:
-  #     - "30080:80"
-  # backend:
-  #   image: matgo-backend:0.0.1
-  #   volumes:
-  #     - ./backend/app/logs:/app/logs
-  #   restart: unless-stopped
-  #   environment:
-  #     - MONGO_DB_USERNAME=${MONGO_DB_USERNAME}
-  #       MONGO_DB_PW=${MONGO_DB_PW}
-  #       MONGO_DB_IP=${MONGO_DB_IP}
-  #       MONGO_DB_NAME=${MONGO_DB_NAME}
-  #       MONGO_DB_PORT=${MONGO_DB_PORT}
-  #   networks:
-  #     - matgo
-  #   ports:
-  #     - "38080:8080"
+  frontend:
+    image: matgo-front:0.0.1
+    volumes:
+      - ./frontend/app/logs:/app/logs
+    restart: unless-stopped
+    env_file:
+      - front.env
+    networks:
+      - matgo
+    ports:
+      - "30080:80"
+  backend:
+    image: matgo-back:0.0.1
+    volumes:
+      - ./backend/app/logs:/app/logs
+    restart: unless-stopped
+    env_file:
+      - back.env
+    networks:
+      - matgo
+    ports:
+      - "38080:8080"
   mongodb:
     image: mongo:7.0.15
     volumes:
