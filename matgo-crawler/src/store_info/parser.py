@@ -73,8 +73,6 @@ def main_image(driver, tab):
 
     return {"img_list": img_list, ""}
 
-
-
 def category_list():
     ## 카테고리 가져오는 로직 추가 필요
     return None
