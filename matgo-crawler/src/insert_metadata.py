@@ -59,11 +59,11 @@ URL = f"https://map.naver.com/restaurant/list?query={KEYWORD}" # https://pcmap.p
 ## AI API KEY
 
 ## DB
-mongo_ip = "127.0.0.1"
-mongo_port = 40441
+mongo_ip = "192.168.0.100"
+mongo_port = 37017
 mongo_username = os.getenv("MONGO_DB_USERNAME")
 mongo_pw = os.getenv("MONGO_DB_PW")
-mongo_client_url = f"mongodb+srv://{mongo_username}:{mongo_pw}@cluster0.qehwj.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+mongo_client_url = f"mongodb://{mongo_ip}:{mongo_port}"
 # mysql_ip = "127.0.0.1"
 # mysql_port = 46149
 # mysql_admin = os.getenv("MYSQL_ADMIN")
@@ -82,7 +82,7 @@ driver = webdriver.Chrome(options=options)
 actions = ActionChains(driver)
 
 # pymongo client 생성
-client = MongoClient(mongo_client_url, tls=True, tlsAllowInvalidCertificates=True)
+client = MongoClient(mongo_client_url, tls=True, tlsAllowInvalidCertificates=True, username=mongo_username, password=mongo_pw)
 
 # AI 이미지 분석
 TEXT_QUERY_FILE = "./matgo-crawler/src/food_categories.txt"
