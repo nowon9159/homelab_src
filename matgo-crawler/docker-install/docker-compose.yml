@@ -36,6 +36,12 @@ services:
       - matgo
     ports:
       - "37017:27017"
+  # crawler:
+  #   image: crawler:latest
+  #   env_file:
+  #     - crawler.env
+  #   networks:
+  #     - matgo
   gitea:
     image: gitea/gitea:1.22.4
     volumes:
