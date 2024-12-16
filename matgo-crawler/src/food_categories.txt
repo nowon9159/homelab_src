@@ -155,3 +155,4 @@
 수정과|["dssrt"]
 인절미|["dssrt"]
 고기|["group", "fmly", "dinner"]
+라멘|["solo", "cupl", "dinner"]

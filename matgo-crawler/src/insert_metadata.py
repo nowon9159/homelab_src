@@ -54,7 +54,7 @@ load_dotenv()
 # 상수
 ## 크롤링
 WAIT_TIMEOUT = random.uniform(10, 11) ## 대기 시간(초)
-KEYWORD = "양천향교역 김치찌개" ## 테스트코드 맥도날드 명동점
+KEYWORD = "양천향교역 라멘" ## 테스트코드 맥도날드 명동점
 URL = f"https://map.naver.com/restaurant/list?query={KEYWORD}" # https://pcmap.place.naver.com/place/list?query <-- 해당 url도 가능
 ## AI API KEY
 
@@ -63,7 +63,8 @@ mongo_ip = "192.168.0.100"
 mongo_port = 37017
 mongo_username = os.getenv("MONGO_DB_USERNAME")
 mongo_pw = os.getenv("MONGO_DB_PW")
-mongo_client_url = f"mongodb://{mongo_ip}:{mongo_port}"
+#mongo_client_url = f"mongodb://{mongo_ip}:{mongo_port}"
+mongo_client_url = f"mongodb+srv://{mongo_username}:{mongo_pw}@cluster0.qehwj.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 # mysql_ip = "127.0.0.1"
 # mysql_port = 46149
 # mysql_admin = os.getenv("MYSQL_ADMIN")
@@ -260,6 +261,7 @@ def detail_info():
                     for tag in tag_elems:
                         tags.append(tag.text)
 
+                    unique_tags = list(set(tags))
                     break
                 except Exception as e:
                     try:
@@ -321,7 +323,7 @@ def detail_info():
                                 
                             tags.append(food_text)
                     
-                    tags = list(set(tags))
+                    unique_tags = list(set(tags))
                     break
                 except Exception as e:
                     try:
@@ -351,7 +353,7 @@ def detail_info():
         image_meta = {
             'store_id': store_id,
             'img_url': img_url,
-            'tags': tags
+            'tags': unique_tags
         }
         image_meta_list.append(image_meta)
     
@@ -369,10 +371,11 @@ def detail_info():
         },
         'location': {
             'type': 'Point',
-            'coordinates': [latitude, longitude]
+            'coordinates': [longitude, latitude]
+            #'coordinates': [latitude, longitude]
         },
         'category': category_list,
-        'image_url': img_list,
+        'img_url': img_list,
         'naver_url': cleaned_url,
         'simple_review': review_list[0],
         'famous_cnt': calc_famous_cnt(star=star_rate, review=review_cn)
