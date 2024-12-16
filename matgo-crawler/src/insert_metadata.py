@@ -372,7 +372,6 @@ def detail_info():
         'location': {
             'type': 'Point',
             'coordinates': [longitude, latitude]
-            #'coordinates': [latitude, longitude]
         },
         'category': category_list,
         'img_url': img_list,
