@@ -90,6 +90,7 @@
 조개찜|["cupl", "dinner", "fmly", "group"]
 해물찜|["dinner", "fmly", "group"]
 고등어구이|["lunch", "dinner", "fmly"]
+생선구이|["lunch", "dinner", "fmly"]
 삼치구이|["lunch", "dinner", "fmly"]
 꽁치구이|["lunch", "dinner", "fmly"]
 붕어빵|["dssrt"]

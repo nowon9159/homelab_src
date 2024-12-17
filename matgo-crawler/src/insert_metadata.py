@@ -54,7 +54,7 @@ load_dotenv()
 # 상수
 ## 크롤링
 WAIT_TIMEOUT = random.uniform(10, 11) ## 대기 시간(초)
-KEYWORD = "양천향교역 라멘" ## 테스트코드 맥도날드 명동점
+KEYWORD = "발산역 제육볶음" ## 테스트코드 맥도날드 명동점
 URL = f"https://map.naver.com/restaurant/list?query={KEYWORD}" # https://pcmap.place.naver.com/place/list?query <-- 해당 url도 가능
 ## AI API KEY
 
@@ -144,8 +144,8 @@ def get_lat_lon(input_address):
     time.sleep(random.uniform(3, 4))
 
 
-    lat_value = lat.get_attribute("value")
-    lon_value = lon.get_attribute("value")
+    lat_value = float(lat.get_attribute("value"))
+    lon_value = float(lon.get_attribute("value"))
 
     time.sleep(random.uniform(1, 2))
     
@@ -173,7 +173,7 @@ def ai_classification_food(url, text_query):
         pred_text = text_query[pred_idx]
 
         # 조건에 따라 결과 반환
-        if max_prob < 0.89:
+        if max_prob < 0.63:
             print(f"이미지 분석 취소: 신뢰도 높은 결과 없음 , max_prob: {max_prob}")
             return False
         else:
@@ -210,26 +210,26 @@ def detail_info():
     url_path_match = re.search(r'place/(\d+)', url_path)
     store_id = url_path_match.group(1) if url_path_match else None
     # mongo
-    current_status = detail_ele.find('em').get_text() if detail_ele else None
-    time_ele = soup.find('time', {'aria-hidden': 'true'}).get_text() if detail_ele else None
+    current_status = detail_ele.find('em').get_text() if detail_ele.find('em') else None
+    time_ele = soup.find('time', {'aria-hidden': 'true'}).get_text() if soup.find('time', {'aria-hidden': 'true'}) else None
     strt_time, end_time = (time_ele, None) if current_status == '영업 종료' else (None, time_ele)
     # mysql
-    store_nm = subject_ele.find('span', class_='GHAhO').get_text() if subject_ele else None
-    address = detail_ele.find('span', class_='LDgIH').get_text() if detail_ele else None
-    tel_no = detail_ele.find('span', class_='xlx7Q').get_text() if detail_ele else None
+    store_nm = subject_ele.find('span', class_='GHAhO').get_text() if subject_ele.find('span', class_='GHAhO') else None
+    address = detail_ele.find('span', class_='LDgIH').get_text() if detail_ele.find('span', class_='LDgIH') else None
+    tel_no = detail_ele.find('span', class_='xlx7Q').get_text() if detail_ele.find('span', class_='xlx7Q') else None
     star_rate = (subject_ele.find('span', class_='PXMot LXIwF').get_text() if subject_ele.find('span', class_='PXMot LXIwF') else "0.0")
     star_rate = float(re.search(r"\d+\.\d+", star_rate).group()) if star_rate == True else "0.0"
     lat_lon_list = get_lat_lon(input_address=address)
     latitude = lat_lon_list[0]
     longitude = lat_lon_list[1]
-    tag = subject_ele.find('span', class_='lnJFt').get_text() if subject_ele else None
+    tag = subject_ele.find('span', class_='lnJFt').get_text() if subject_ele.find('span', class_='lnJFt') else None
     tags = []
     tags.append(tag)
 
 
     # review_cn 연산
-    visitor_review_txt = subject_ele.find('a', attrs={"href": f"/restaurant/{store_id}/review/visitor"}).get_text() if subject_ele else None
-    blog_review_txt = subject_ele.find('a', attrs={"href": f"/restaurant/{store_id}/review/ugc"}).get_text() if subject_ele else None
+    visitor_review_txt = subject_ele.find('a', attrs={"href": f"/restaurant/{store_id}/review/visitor"}).get_text() if subject_ele.find('a', attrs={"href": f"/restaurant/{store_id}/review/visitor"}) else None
+    blog_review_txt = subject_ele.find('a', attrs={"href": f"/restaurant/{store_id}/review/ugc"}).get_text() if subject_ele.find('a', attrs={"href": f"/restaurant/{store_id}/review/ugc"}) else None
     visitor_review_cn = int(re.search(r'\b\d{1,3}(?:,\d{3})*\b', visitor_review_txt).group().replace(',', '')) if visitor_review_txt == True else 0
     blog_review_cn = int(re.search(r'\b\d{1,3}(?:,\d{3})*\b', blog_review_txt).group().replace(',', '')) if blog_review_txt == True else 0
     review_cn = visitor_review_cn + blog_review_cn
@@ -473,7 +473,7 @@ def crwl_data():
             
             if len(image_meta_list) == 0:
                 continue
-
+                
             # 상세 정보 크롤링 및 mongo DB에 저장
             conn_mongodb("image_meta", image_meta_list)
             conn_mongodb("store_information", store_information_list)
@@ -486,8 +486,8 @@ def crwl_data():
             #     mysql_connection.close()  # MySQL 연결 종료
 
             # 가게 5개로 임시 제한
-            if index == 5:
-                break
+            # if index == 5:
+            #     break
     except Exception as e:
         print("크롤링 작업이 실패했습니다:", e)
         driver.close()
