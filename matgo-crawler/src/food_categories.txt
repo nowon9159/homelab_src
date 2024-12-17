@@ -6,6 +6,8 @@
 순두부찌개|["solo", "lunch", "dinner", "fmly"]
 수육|["dinner", "fmly", "night", "group"]
 국밥|["dinner", "lunch", "group"]
+돼지국밥|["dinner", "lunch", "group"]
+순대국밥|["dinner", "lunch", "group"]
 삼겹살|["night", "dinner", "fmly", "group"]
 족발|["dinner", "fmly", "night", "group"]
 보쌈|["dinner", "fmly", "night", "group"]

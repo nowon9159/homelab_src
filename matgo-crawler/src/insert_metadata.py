@@ -217,8 +217,8 @@ def detail_info():
     store_nm = subject_ele.find('span', class_='GHAhO').get_text() if subject_ele else None
     address = detail_ele.find('span', class_='LDgIH').get_text() if detail_ele else None
     tel_no = detail_ele.find('span', class_='xlx7Q').get_text() if detail_ele else None
-    star_rate = (subject_ele.find('span', class_='PXMot LXIwF').get_text() if subject_ele.find('span', class_='PXMot LXIwF') else "Node")
-    star_rate = float(re.search(r"\d+\.\d+", star_rate).group())
+    star_rate = (subject_ele.find('span', class_='PXMot LXIwF').get_text() if subject_ele.find('span', class_='PXMot LXIwF') else "0.0")
+    star_rate = float(re.search(r"\d+\.\d+", star_rate).group()) if star_rate == True else None
     lat_lon_list = get_lat_lon(input_address=address)
     latitude = lat_lon_list[0]
     longitude = lat_lon_list[1]
