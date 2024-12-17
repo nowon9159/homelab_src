@@ -218,7 +218,7 @@ def detail_info():
     address = detail_ele.find('span', class_='LDgIH').get_text() if detail_ele else None
     tel_no = detail_ele.find('span', class_='xlx7Q').get_text() if detail_ele else None
     star_rate = (subject_ele.find('span', class_='PXMot LXIwF').get_text() if subject_ele.find('span', class_='PXMot LXIwF') else "0.0")
-    star_rate = float(re.search(r"\d+\.\d+", star_rate).group()) if star_rate == True else None
+    star_rate = float(re.search(r"\d+\.\d+", star_rate).group()) if star_rate == True else "0.0"
     lat_lon_list = get_lat_lon(input_address=address)
     latitude = lat_lon_list[0]
     longitude = lat_lon_list[1]
@@ -230,9 +230,9 @@ def detail_info():
     # review_cn 연산
     visitor_review_txt = subject_ele.find('a', attrs={"href": f"/restaurant/{store_id}/review/visitor"}).get_text() if subject_ele else None
     blog_review_txt = subject_ele.find('a', attrs={"href": f"/restaurant/{store_id}/review/ugc"}).get_text() if subject_ele else None
-    visitor_review_cn = re.search(r'\b\d{1,3}(?:,\d{3})*\b', visitor_review_txt).group()
-    blog_review_cn = re.search(r'\b\d{1,3}(?:,\d{3})*\b', blog_review_txt).group()
-    review_cn = int(visitor_review_cn.replace(',', '')) + int(blog_review_cn.replace(',', ''))
+    visitor_review_cn = int(re.search(r'\b\d{1,3}(?:,\d{3})*\b', visitor_review_txt).group().replace(',', '')) if visitor_review_txt == True else 0
+    blog_review_cn = int(re.search(r'\b\d{1,3}(?:,\d{3})*\b', blog_review_txt).group().replace(',', '')) if blog_review_txt == True else 0
+    review_cn = visitor_review_cn + blog_review_cn
 
     # 이미지 리스트, 리뷰 리스트 수집
     focus_iframe("detail") # 반드시 필요
@@ -323,6 +323,8 @@ def detail_info():
                                 
                             tags.append(food_text)
                     
+                    
+
                     unique_tags = list(set(tags))
                     break
                 except Exception as e:
