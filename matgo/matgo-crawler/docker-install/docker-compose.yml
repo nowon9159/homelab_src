@@ -1,0 +1,87 @@
+services:
+  frontend:
+    image: matgo-front:latest
+    volumes:
+      - ./frontend/app/logs:/app/logs
+    restart: unless-stopped
+    env_file:
+      - front.env
+    networks:
+      - matgo
+    ports:
+      - "30080:80"
+  backend:
+    image: matgo-back:latest
+    volumes:
+      - ./backend/app/logs:/app/logs
+    restart: unless-stopped
+    env_file:
+      - back.env
+    networks:
+      - matgo
+    ports:
+      - "38000:8000"
+  mongodb:
+    image: mongo:7.0.15
+    volumes:
+      - ./mongodb/data:/data
+    restart: unless-stopped
+    env_file:
+      - ./mongodb.env
+    # environment:
+    #   - MONGODB_INITDB_DATABASE
+    #     MONGODB_INITDB_ROOT_USERNAME
+    #     MONGODB_INITDB_ROOT_PASSWORD
+    networks:
+      - matgo
+    ports:
+      - "37017:27017"
+  # crawler:
+  #   image: crawler:latest
+  #   env_file:
+  #     - crawler.env
+  #   networks:
+  #     - matgo
+  gitea:
+    image: gitea/gitea:1.22.4
+    volumes:
+      - ./gitea:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    restart: unless-stopped
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+      - GITEA__database__DB_TYPE=mysql
+      - GITEA__database__HOST=gitea-db:3306
+      - GITEA__database__NAME=gitea
+      - GITEA__database__USER=gitea
+      - GITEA__database__PASSWD=gitea
+    networks:
+      - matgo
+    ports:
+      - "31080:3000"
+      - "31022:22"
+    depends_on:
+      - gitea-db
+  gitea-db:
+    image: mysql:8
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=gitea
+      - MYSQL_USER=gitea
+      - MYSQL_PASSWORD=gitea
+      - MYSQL_DATABASE=gitea
+    networks:
+      - matgo
+    volumes:
+      - ./mysql:/var/lib/mysql
+networks:
+  matgo:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.30.1.0/24
+          ip_range: 172.30.1.0/26
+          gateway: 172.30.1.1
