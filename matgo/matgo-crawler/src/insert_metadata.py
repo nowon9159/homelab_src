@@ -54,7 +54,7 @@ load_dotenv()
 # 상수
 ## 크롤링
 WAIT_TIMEOUT = random.uniform(10, 11) ## 대기 시간(초)
-KEYWORD = "발산역 국밥" ## 테스트코드 맥도날드 명동점
+KEYWORD = os.getenv("CRAWLER_KEYWORD")
 URL = f"https://map.naver.com/restaurant/list?query={KEYWORD}" # https://pcmap.place.naver.com/place/list?query <-- 해당 url도 가능
 ## AI API KEY
 
