@@ -36,12 +36,12 @@ services:
       - matgo
     ports:
       - "37017:27017"
-  # crawler:
-  #   image: crawler:latest
-  #   env_file:
-  #     - crawler.env
-  #   networks:
-  #     - matgo
+  crawler:
+    image: crawler:latest
+    env_file:
+      - crawler.env
+    networks:
+      - matgo
   mysql:
     image: mysql:9.0.1
     restart: always

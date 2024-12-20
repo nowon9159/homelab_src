@@ -89,8 +89,8 @@ actions = ActionChains(driver)
 client = MongoClient(mongo_client_url, tls=True, tlsAllowInvalidCertificates=True, username=mongo_username, password=mongo_pw)
 
 # AI 이미지 분석
-cache_dir = "./model/huggingface/hub"
-TEXT_QUERY_FILE = "./matgo-crawler/src/food_categories.txt"
+cache_dir = "./ai_model/huggingface/hub"
+TEXT_QUERY_FILE = "./food_categories.txt"
 model = AutoModel.from_pretrained("Bingsu/clip-vit-large-patch14-ko", cache_dir=cache_dir)
 processor = AutoProcessor.from_pretrained("Bingsu/clip-vit-large-patch14-ko", cache_dir=cache_dir)
 
