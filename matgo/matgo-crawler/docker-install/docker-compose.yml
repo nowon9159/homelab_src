@@ -42,7 +42,7 @@ services:
   #     - crawler.env
   #   networks:
   #     - matgo
-  matgo-mysql:
+  mysql:
     image: mysql:9.0.1
     restart: always
     env_file:
