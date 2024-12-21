@@ -29,15 +29,15 @@ from selenium.webdriver import ActionChains
 from fake_useragent import UserAgent
 ## mongodb
 from pymongo import MongoClient
-from bson import json_util
+# from bson import json_util
 ## mysql
-import mysql.connector
-from mysql.connector import Error
+# import mysql.connector
+# from mysql.connector import Error
 ## common
 from urllib.parse import urlparse, urlunparse # url query 정리
 import time
 import re
-import json
+# import json
 import random
 import os
 from dotenv import load_dotenv
