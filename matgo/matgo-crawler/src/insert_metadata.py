@@ -78,10 +78,14 @@ options = webdriver.ChromeOptions()
 options.add_argument(f'--user-agent={user_agents}')
 options.add_argument("--start-maximized")   # 화면 크게
 #options.add_experimental_option("detach", True) # 자동종료 방지(드라이버 유지)
-#options.add_argument("--headless=chrome")
+options.add_argument("--headless=new")
 from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
 driver_path = "./chromedriver-linux64/chromedriver"
-service = webdriver.ChromeService(executable_path=driver_path)
+release = 'https://chromedriver.storage.googleapis.com/LATEST_RELEASE'
+version = requests.get(release).text
+service = Service(executable_path=ChromeDriverManager(version=version))
+
 driver = webdriver.Chrome(options=options, service=service)
 actions = ActionChains(driver)
 
@@ -89,7 +93,7 @@ actions = ActionChains(driver)
 client = MongoClient(mongo_client_url, tls=True, tlsAllowInvalidCertificates=True, username=mongo_username, password=mongo_pw)
 
 # AI 이미지 분석
-cache_dir = "ai_model/huggingface/hub/"
+cache_dir = "./ai_model/huggingface/hub/"
 TEXT_QUERY_FILE = "./food_categories.txt"
 model = AutoModel.from_pretrained("Bingsu/clip-vit-large-patch14-ko", cache_dir=cache_dir)
 processor = AutoProcessor.from_pretrained("Bingsu/clip-vit-large-patch14-ko", cache_dir=cache_dir)
